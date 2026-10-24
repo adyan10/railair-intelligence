@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { mockRailairService } from '../services/mockRailairService';
-import type { JourneyEstimate, Station } from '../types/railair';
+import type { JourneyEstimate } from '../types/railair';
 import { STATIONS } from '../data/mock';
 import {
-  formatConcentration,
   formatExposureProxy,
   formatMinutes,
   formatKm,
@@ -20,8 +19,6 @@ import {
   Cell,
 } from 'recharts';
 import { Navigation, AlertCircle, Info, Loader } from 'lucide-react';
-
-const STATION_IDS = STATIONS.map((s) => s.id);
 
 function ExposureTooltip({ active, payload }: { active?: boolean; payload?: { payload: { label: string; pm25: number; pm10: number } }[] }) {
   if (!active || !payload?.length) return null;
@@ -44,6 +41,21 @@ export function JourneyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let active = true;
+    mockRailairService.getJourneyEstimate(
+      'MRT',
+      'NDLS',
+      108,
+      'Meerut → New Delhi'
+    ).then((result) => {
+      if (active) setEstimate(result);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function runEstimate() {
     if (originId === destId) {
       setError('Origin and destination must be different.');
@@ -56,7 +68,7 @@ export function JourneyPage() {
         originId,
         destId,
         duration,
-        `${STATIONS.find((s) => s.id === originId)?.shortName} → ${STATIONS.find((s) => s.id === destId)?.shortName}`
+        `${STATIONS.find((s) => s.id === originId)?.shortName ?? originId} → ${STATIONS.find((s) => s.id === destId)?.shortName ?? destId}`
       );
       setEstimate(result);
     } catch (e) {

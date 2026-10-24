@@ -25,7 +25,6 @@ export function InterventionsPage() {
   }, []);
 
   const selected = scenarios.find((s) => s.id === selectedId);
-  const selectedResult = results.find((r) => r.scenarioId === selectedId);
 
   const handleOverride = useCallback((key: string, value: number) => {
     setOverrides((prev) => ({ ...prev, [key]: value }));
@@ -65,7 +64,6 @@ export function InterventionsPage() {
     }
   }
 
-  const baselineResult = results.find((r) => r.isBaseline);
   const effectiveAssumptions = selected
     ? { ...selected.assumptions, ...overrides }
     : {};

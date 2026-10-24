@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { mockRailairService } from '../services/mockRailairService';
 import type { CorridorSegment, Station } from '../types/railair';
 import { CorridorMap } from '../components/CorridorMap';
-import { formatConcentration, confidenceLabel, severityColorClass, pm25SeverityColor } from '../lib/formatters';
+import { formatConcentration, confidenceLabel, pm25SeverityColor } from '../lib/formatters';
 import { MapPin, Info } from 'lucide-react';
 
 export function CorridorPage() {

@@ -96,30 +96,63 @@ export function buildJourneyEstimate(
 
 /**
  * Finds corridor segments that connect origin to destination in order.
- * Assumes segments form a linear chain.
+ * Supports both forward (origin -> destination) and reverse (destination -> origin) traversals.
+ * For reverse traversals, returns inverted segments in the direction of travel.
  */
 export function findPathSegments(
   originId: string,
   destinationId: string,
   segments: CorridorSegment[]
 ): CorridorSegment[] {
-  // Build adjacency for linear chain
-  const segmentChain: CorridorSegment[] = [];
-  let currentId = originId;
+  if (!originId || !destinationId || originId === destinationId) {
+    return [];
+  }
 
+  // 1. Try forward traversal (origin -> destination)
+  const forwardChain: CorridorSegment[] = [];
+  let currentId = originId;
   const segsByFrom = new Map(segments.map((s) => [s.fromStationId, s]));
-  const visited = new Set<string>();
+  const visitedForward = new Set<string>();
 
   while (currentId !== destinationId) {
-    if (visited.has(currentId)) break; // cycle guard
-    visited.add(currentId);
+    if (visitedForward.has(currentId)) break; // cycle guard
+    visitedForward.add(currentId);
     const next = segsByFrom.get(currentId);
     if (!next) break;
-    segmentChain.push(next);
+    forwardChain.push(next);
     currentId = next.toStationId;
   }
 
-  return segmentChain;
+  if (currentId === destinationId && forwardChain.length > 0) {
+    return forwardChain;
+  }
+
+  // 2. Try reverse traversal (destination -> origin along the standard corridor)
+  const reverseChain: CorridorSegment[] = [];
+  currentId = destinationId;
+  const visitedReverse = new Set<string>();
+
+  while (currentId !== originId) {
+    if (visitedReverse.has(currentId)) break; // cycle guard
+    visitedReverse.add(currentId);
+    const next = segsByFrom.get(currentId);
+    if (!next) break;
+    reverseChain.push(next);
+    currentId = next.toStationId;
+  }
+
+  if (currentId === originId && reverseChain.length > 0) {
+    // Reverse the segment sequence and invert each segment's direction
+    return reverseChain.reverse().map((seg) => ({
+      ...seg,
+      id: `${seg.id}-rev`,
+      fromStationId: seg.toStationId,
+      toStationId: seg.fromStationId,
+      path: [...seg.path].reverse(),
+    }));
+  }
+
+  return [];
 }
 
 // ?? Scenario / Intervention Calculations ????????????????????????????????????
