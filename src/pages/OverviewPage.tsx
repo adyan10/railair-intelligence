@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { mockRailairService } from '../services/mockRailairService';
-import type { KpiSummary, TrendDataPoint, DataQualityItem } from '../types/railair';
+import type { KpiSummary, TrendDataPoint, DataQualityItem, CorridorContextType } from '../types/railair';
 import { STATIONS } from '../data/mock';
 import { KpiCards } from '../components/KpiCards';
 import { TrendChart } from '../components/TrendChart';
@@ -13,9 +13,15 @@ import {
   Navigation,
 } from 'lucide-react';
 import { formatISOTimestamp } from '../lib/formatters';
+import { formatHourIST, getCpcbCategory, getNaqiEstimate } from '../lib/diurnal';
 
 export function OverviewPage() {
   const navigate = useNavigate();
+  const corridorCtx = useOutletContext<CorridorContextType | undefined>();
+  const activePollutant = corridorCtx?.selectedPollutant ?? 'PM2.5';
+  const activeHour = corridorCtx?.selectedHour ?? 18;
+  const diurnalFactor = corridorCtx?.diurnalFactor ?? 1.0;
+
   const [kpi, setKpi] = useState<KpiSummary | null>(null);
   const [trend, setTrend] = useState<TrendDataPoint[]>([]);
   const [quality, setQuality] = useState<DataQualityItem[]>([]);
@@ -37,6 +43,15 @@ export function OverviewPage() {
   useEffect(() => {
     load();
   }, []);
+
+  // Scale baseline average metrics dynamically with the diurnal cycle
+  const currentKpi: KpiSummary | null = kpi
+    ? {
+        ...kpi,
+        avgPm25: Math.round(kpi.avgPm25 * diurnalFactor),
+        avgPm10: Math.round(kpi.avgPm10 * diurnalFactor),
+      }
+    : null;
 
   return (
     <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
@@ -178,8 +193,14 @@ export function OverviewPage() {
           developed for interface prototyping. Direct empirical telemetry feeds from CPCB and SPCB monitors will connect via API in future phases.
           Coverage indicates 2 of 7 stations have baseline real-world references; the remaining 5 nodes are synthetic interpolations.
         </p>
-        <div className="text-[11px] text-amber-700 pt-1">
-          RECORD TIMESTAMP: {kpi ? formatISOTimestamp(kpi.timestamp) : '24 Oct 2026, 18:30 IST'} · REPOSITORY ID: NR-DELHI-MTC-01
+        <div className="text-[11px] text-amber-700 pt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span>RECORD BASELINE: {kpi ? formatISOTimestamp(kpi.timestamp) : '24 Oct 2026, 18:30 IST'}</span>
+          <span>·</span>
+          <span>ACTIVE DIURNAL STEP: {formatHourIST(activeHour)} ({diurnalFactor.toFixed(2)}× factor)</span>
+          <span>·</span>
+          <span>ACTIVE POLLUTANT: {activePollutant}</span>
+          <span>·</span>
+          <span>REPOSITORY ID: NR-DELHI-MTC-01</span>
         </div>
       </div>
 
@@ -193,7 +214,7 @@ export function OverviewPage() {
           ))}
         </div>
       ) : kpi ? (
-        <KpiCards kpi={kpi} />
+        <KpiCards kpi={currentKpi ?? kpi} activePollutant={activePollutant} />
       ) : null}
 
       {/* =========================================================================
@@ -206,7 +227,7 @@ export function OverviewPage() {
               Monitored Corridor Nodes (7 Station Alignment)
             </h3>
             <p className="text-xs text-slate-500 font-mono mt-0.5">
-              Northern Railway Mainline · Meerut City to New Delhi Terminal (83 km)
+              Northern Railway Mainline · Meerut City to New Delhi Terminal (83 km) · {activePollutant} at {formatHourIST(activeHour)}
             </p>
           </div>
           <button
@@ -221,13 +242,14 @@ export function OverviewPage() {
         {/* Station Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {STATIONS.map((station, idx) => {
-            const pm25 = station.observations.find((o) => o.pollutant === 'PM2.5')?.value ?? 0;
-            const statusLabel =
-              pm25 > 150 ? 'Very Poor' : pm25 > 120 ? 'Poor' : pm25 > 90 ? 'Moderate' : 'Good';
-            const statusColor =
-              pm25 > 150 ? 'text-orange-600 bg-orange-50 border-orange-200' :
-              pm25 > 120 ? 'text-amber-700 bg-amber-50 border-amber-200' :
-              'text-emerald-700 bg-emerald-50 border-emerald-200';
+            const basePm25 = station.observations.find((o) => o.pollutant === 'PM2.5')?.value ?? 0;
+            const basePm10 = station.observations.find((o) => o.pollutant === 'PM10')?.value ?? Math.round(basePm25 * 1.7);
+            const val = activePollutant === 'PM10'
+              ? Math.round(basePm10 * diurnalFactor)
+              : activePollutant === 'NAQI'
+              ? getNaqiEstimate(Math.round(basePm25 * diurnalFactor))
+              : Math.round(basePm25 * diurnalFactor);
+            const cpcb = getCpcbCategory(val, activePollutant);
 
             return (
               <div
@@ -247,10 +269,16 @@ export function OverviewPage() {
                 </div>
                 <div className="mt-2 pt-2 border-t border-[#DCE3EA] flex items-baseline justify-between">
                   <span className="text-base font-bold font-mono text-[#17365D]">
-                    {pm25}
+                    {val}
+                    <span className="text-[9px] text-slate-400 font-normal ml-0.5">
+                      {activePollutant === 'NAQI' ? 'AQI' : 'µg'}
+                    </span>
                   </span>
-                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${statusColor}`}>
-                    {statusLabel}
+                  <span
+                    className="text-[9px] font-mono px-1.5 py-0.5 rounded border"
+                    style={{ backgroundColor: cpcb.bg, borderColor: cpcb.border, color: cpcb.text }}
+                  >
+                    {cpcb.name}
                   </span>
                 </div>
               </div>
@@ -269,7 +297,7 @@ export function OverviewPage() {
               24-Hour Diurnal Simulated Concentration Profile
             </h3>
             <p className="text-xs text-slate-500 font-mono mt-0.5">
-              Corridor average particulate levels · Morning rush (08:00) &amp; nocturnal thermal inversion peak (20:00)
+              Corridor average particulate levels · Active timestep: {formatHourIST(activeHour)} ({diurnalFactor.toFixed(2)}× baseline)
             </p>
           </div>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-800">
@@ -300,8 +328,8 @@ export function OverviewPage() {
           <div className="text-3xl font-bold font-mono text-[#17365D]">15 µg/m³</div>
           <p className="text-xs font-mono text-slate-600 mt-2 leading-relaxed">
             Annual mean air quality benchmark. Current simulated corridor average of{' '}
-            <strong className="text-[#17365D]">{kpi ? `${kpi.avgPm25} µg/m³` : '135 µg/m³'}</strong> is approximately{' '}
-            <strong className="text-red-700 font-semibold">{kpi ? `${Math.round(kpi.avgPm25 / 15)}×` : '9×'}</strong>{' '}
+            <strong className="text-[#17365D]">{currentKpi ? `${currentKpi.avgPm25} µg/m³` : '135 µg/m³'}</strong> at {formatHourIST(activeHour)} is approximately{' '}
+            <strong className="text-red-700 font-semibold">{currentKpi ? `${Math.round(currentKpi.avgPm25 / 15)}×` : '9×'}</strong>{' '}
             above the international threshold.
           </p>
         </div>
@@ -319,9 +347,9 @@ export function OverviewPage() {
           <p className="text-xs font-mono text-slate-600 mt-2 leading-relaxed">
             National Ambient Air Quality Standard (24-hour limit). Current simulated corridor level is{' '}
             <strong className="text-orange-700 font-semibold">
-              {kpi ? `+${Math.round((kpi.avgPm25 / 60 - 1) * 100)}%` : '+125%'}
+              {currentKpi ? `+${Math.round((currentKpi.avgPm25 / 60 - 1) * 100)}%` : '+125%'}
             </strong>{' '}
-            over India's domestic standard.
+            over India's domestic standard at {formatHourIST(activeHour)}.
           </p>
         </div>
       </div>

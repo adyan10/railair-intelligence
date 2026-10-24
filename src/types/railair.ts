@@ -141,3 +141,16 @@ export interface DataQualityItem {
   confidence: ConfidenceLevel;
   coveragePercent: number;
 }
+
+export type ActivePollutant = 'PM2.5' | 'PM10' | 'NAQI';
+
+export interface CorridorContextType {
+  selectedPollutant: ActivePollutant;
+  setSelectedPollutant: (pol: ActivePollutant) => void;
+  selectedHour: number;
+  setSelectedHour: (hour: number) => void;
+  isPlaying: boolean;
+  setIsPlaying: (playing: boolean) => void;
+  togglePlay: () => void;
+  diurnalFactor: number;
+}
