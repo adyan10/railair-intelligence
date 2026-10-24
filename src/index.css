@@ -122,18 +122,18 @@
   100% { transform: scale(1); opacity: 0.4; }
 }
 .anim-origin-point {
-  transform-origin: 85px 310px;
+  transform-origin: 35px 360px;
   animation: pointPulse 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes railGuideGrow {
-  0% { stroke-dashoffset: 700; opacity: 0; }
+  0% { stroke-dashoffset: 760; opacity: 0; }
   30% { opacity: 1; }
   100% { stroke-dashoffset: 0; opacity: 0.8; }
 }
 .anim-guideline {
-  stroke-dasharray: 700;
-  stroke-dashoffset: 700;
+  stroke-dasharray: 760;
+  stroke-dashoffset: 760;
   animation: railGuideGrow 1.2s 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
