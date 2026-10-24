@@ -1,0 +1,53 @@
+{
+  "entity": "Uttar Pradesh Railways Network",
+  "state": "Uttar Pradesh",
+  "country": "India",
+  "strategic_importance": {
+    "network_length_rank": "Rank 1 in India (~9,164 route km, ~13.5% of national total)",
+    "junction_density": "Highest density of multi-directional rail junctions in India",
+    "freight_nexus": "Meeting hub of both Eastern DFC and Western DFC at Dadri (Greater Noida)"
+  },
+  "zonal_headquarters_in_state": [
+    {
+      "zone": "North Central Railway (NCR)",
+      "headquarters": "Prayagraj (Subedarganj)",
+      "divisions_in_up": ["Prayagraj (PRYJ)", "Agra (AGC)", "Jhansi (VGLJ)"]
+    },
+    {
+      "zone": "North Eastern Railway (NER)",
+      "headquarters": "Gorakhpur",
+      "divisions_in_up": ["Lucknow (NER)", "Izzatnagar/Bareilly (IZN)", "Varanasi (BSB)"]
+    }
+  ],
+  "other_zones_operating_in_up": [
+    {
+      "zone": "Northern Railway (NR)",
+      "headquarters": "New Delhi",
+      "divisions_in_up": ["Lucknow (NR)", "Moradabad (MB)", "Delhi Division (covers Ghaziabad, Meerut)"]
+    },
+    {
+      "zone": "East Central Railway (ECR)",
+      "divisions_in_up": ["Pt. Deen Dayal Upadhyaya (DDU)", "Dhanbad (covers Sonbhadra district: Chopan, Renukoot)"]
+    },
+    {
+      "zone": "West Central Railway (WCR)",
+      "lines_in_up": ["Agra-Gwalior border sections, Mathura-Bayana line"]
+    }
+  ],
+  "tier_1_mega_junctions": [
+    { "code": "CNB", "name": "Kanpur Central", "significance": "10 platforms, 300+ passenger trains daily; primary junction on Delhi-Howrah trunk route" },
+    { "code": "DDU", "name": "Pt. Deen Dayal Upadhyaya Jn", "significance": "Asia's largest marshalling yard; Gateway connecting Northern India to Eastern India" },
+    { "code": "PRYJ", "name": "Prayagraj Junction", "significance": "NCR Zonal headquarters; confluence point for Mumbai, Howrah, Delhi, and South India routes" },
+    { "code": "LKO / LJN", "name": "Lucknow Charbagh", "significance": "Dual terminal complex (NR & NER); historic architectural marvel and capital hub" },
+    { "code": "GKP", "name": "Gorakhpur Junction", "significance": "NER Zonal headquarters; world's second-longest railway platform (1,366.33 m)" },
+    { "code": "BSB / BSBS", "name": "Varanasi Jn / Banaras", "significance": "Premier pilgrimage gateway, electric locomotive production hub (BLW - Banaras Locomotive Works)" },
+    { "code": "VGLJ", "name": "Virangana Lakshmibai Jhansi", "significance": "North-South strategic hub on the Delhi-Chennai and Delhi-Mumbai central artery" },
+    { "code": "MTJ", "name": "Mathura Junction", "significance": "7-route junction connecting Delhi, Mumbai, Agra, Kasganj, Alwar" },
+    { "code": "MB", "name": "Moradabad Junction", "significance": "Major freight, brass handicraft transport, and Rohilkhand division headquarters" }
+  ],
+  "isolated_files": {
+    "stations_csv": "isolated_data/uttar_pradesh_railway_stations.csv",
+    "stations_geojson": "isolated_data/uttar_pradesh_railway_stations.geojson",
+    "state_boundary_layer": "website/docs/data/geojson/states.geojson (Feature Line 37)"
+  }
+}

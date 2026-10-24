@@ -1,0 +1,74 @@
+{
+  "entity": "Uttar Pradesh",
+  "level": "State",
+  "state_code_census": "9",
+  "abbreviation": "UP",
+  "overview": {
+    "capital": "Lucknow",
+    "country": "India",
+    "borders": [
+      "Uttarakhand",
+      "Himachal Pradesh",
+      "Haryana",
+      "NCT of Delhi",
+      "Rajasthan",
+      "Madhya Pradesh",
+      "Chhattisgarh",
+      "Jharkhand",
+      "Bihar",
+      "Nepal (International Border)"
+    ],
+    "geographic_extent": {
+      "latitude_range": "23.87 to 30.41 N",
+      "longitude_range": "77.08 to 84.64 E"
+    }
+  },
+  "demographics": {
+    "sex_ratio": {
+      "census_2001": 898,
+      "census_2011": 908,
+      "change": 10,
+      "national_deviation_2011": -32
+    },
+    "census_2011_districts_count": 71,
+    "notable_district_indicators": {
+      "lowest_literacy": { "district": "Shrawasti", "rate": "46.74%" },
+      "low_literacy_group": ["Bahraich (49.36%)", "Balrampur (49.51%)", "Budaun (51.29%)"],
+      "lowest_sex_ratio": { "district": "Budaun", "ratio": 871 },
+      "highest_population_density": ["Ghaziabad", "Varanasi", "Lucknow", "Kanpur Nagar"]
+    }
+  },
+  "political_and_electoral_structure": {
+    "parliamentary_constituencies_lok_sabha": {
+      "total_seats": 80,
+      "share_of_national_parliament": "14.73%",
+      "category_distribution": {
+        "general": 63,
+        "scheduled_caste_sc": 17,
+        "scheduled_tribe_st": 0
+      },
+      "election_2014_results_summary": {
+        "bjp": 71,
+        "sp": 5,
+        "inc": 2,
+        "ad_apna_dal": 2,
+        "bsp": 0
+      },
+      "isolated_csv": "isolated_data/uttar_pradesh_parliamentary_constituencies_2014.csv"
+    },
+    "assembly_constituencies_vidhan_sabha": {
+      "total_seats": 403,
+      "share_of_national_assembly": "9.78%"
+    }
+  },
+  "geospatial_files": {
+    "state_feature_location": "website/docs/data/geojson/states.geojson (Feature Line 37)",
+    "feature_byte_size": 354377,
+    "geometry_type": "MultiPolygon",
+    "district_features_source": "website/docs/data/geojson/dists11.geojson (71 features matching ST_NM: 'Uttar Pradesh')"
+  },
+  "tabular_files": {
+    "census_sex_ratio_summary": "isolated_data/uttar_pradesh_census.csv",
+    "parliamentary_constituencies_2014": "isolated_data/uttar_pradesh_parliamentary_constituencies_2014.csv"
+  }
+}

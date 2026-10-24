@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, Polyline, CircleMarker, Tooltip, useMap } from 'react-leaflet';
 import { latLngBounds } from 'leaflet';
 import type { Station, ActivePollutant } from '../types/railair';
 import { getCpcbCategory, getNaqiEstimate } from '../lib/diurnal';
+import { OpenFreeMapLayer } from './OpenFreeMapLayer';
 
 export interface CorridorMapProps {
   stations: Station[];
@@ -109,12 +110,7 @@ export function CorridorMap({
         style={{ height: '100%', width: '100%' }}
         className="w-full h-full z-0"
       >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          attribution='Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, CartoDB | Track alignment: illustrative'
-          maxZoom={18}
-          subdomains="abcd"
-        />
+        <OpenFreeMapLayer />
 
         <MapController
           zoomTarget={zoomTarget}

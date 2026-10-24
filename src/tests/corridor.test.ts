@@ -90,5 +90,12 @@ describe('Corridor Map Data & Station Metadata (Phase 2)', () => {
       }
     });
   });
+
+  it('configures OpenFreeMap public Liberty style and resilient raster fallback', async () => {
+    const { OPENFREEMAP_LIBERTY_STYLE, CARTO_FALLBACK_URL } = await import('../lib/mapConfig');
+    expect(OPENFREEMAP_LIBERTY_STYLE).toBe('https://tiles.openfreemap.org/styles/liberty');
+    expect(CARTO_FALLBACK_URL).toContain('cartocdn.com');
+  });
 });
+
 
