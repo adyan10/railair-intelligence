@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useMap, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
+import { setWorkerUrl } from 'maplibre-gl';
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import '@maplibre/maplibre-gl-leaflet';
 import 'maplibre-gl/dist/maplibre-gl.css';
+
+// Configure MapLibre Web Worker URL explicitly for Vite bundler compatibility
+if (typeof window !== 'undefined' && typeof setWorkerUrl === 'function') {
+  setWorkerUrl(workerUrl);
+}
 
 import {
   OPENFREEMAP_LIBERTY_STYLE,
