@@ -14,6 +14,7 @@ import {
 import { SimBanner } from './SimBanner';
 import type { ActivePollutant, CorridorContextType } from '../types/railair';
 import { getDiurnalFactor, formatHourIST } from '../lib/diurnal';
+import emblemImg from '../../UI resources/Futuristic AI Rail Emblem.png';
 
 const NAV_ITEMS = [
   { to: '/overview', label: 'Overview', icon: LayoutDashboard },
@@ -62,15 +63,21 @@ export function Shell() {
       {/* Sidebar */}
       <aside className="w-60 flex-shrink-0 bg-[#17365D] border-r border-[#122b4a] flex flex-col text-slate-200 shadow-sm z-20">
         {/* Logo */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#1f426e]">
-          <div className="w-8 h-8 rounded bg-white text-[#17365D] flex items-center justify-center font-bold text-sm tracking-wider font-mono shadow-xs">
-            RA
-          </div>
+        <NavLink
+          to="/"
+          title="Back to landing"
+          className="flex items-center gap-3 px-5 py-4 border-b border-[#1f426e] hover:bg-[#122b4a] transition-colors group cursor-pointer"
+        >
+          <img
+            src={emblemImg}
+            alt="RailAir Intelligence Emblem"
+            className="w-8 h-8 object-contain shrink-0 group-hover:scale-105 transition-transform"
+          />
           <div className="min-w-0">
             <div className="font-semibold text-sm text-white tracking-tight leading-tight">RailAir</div>
             <div className="text-[10px] text-slate-300 font-mono tracking-tight leading-tight">Intelligence Prototype</div>
           </div>
-        </div>
+        </NavLink>
 
         {/* Nav */}
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">

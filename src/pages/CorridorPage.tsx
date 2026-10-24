@@ -141,25 +141,27 @@ export function CorridorPage() {
   const legendTicks = ['0', String(thresholds[0]), String(thresholds[1]), String(thresholds[2]), String(thresholds[3]), `${thresholds[4]}+`];
 
   return (
-    <div className="relative w-full h-full flex-1 overflow-hidden select-none">
+    <div className="relative w-full h-full flex-1 overflow-hidden">
       {/* 1. Leaflet Interactive Corridor Map Canvas */}
       {loading ? (
         <div className="w-full h-full bg-[#F5F6F8] flex items-center justify-center font-mono text-xs text-rail-muted animate-pulse">
           Loading Corridor Geospatial Alignments...
         </div>
       ) : (
-        <CorridorMap
-          stations={stations}
-          trackPositions={trackPositions}
-          selectedStationId={selectedStationId}
-          onSelectStation={handleStationClick}
-          isDrawerOpen={isDrawerOpen}
-          activePollutant={activePollutant}
-          diurnalFactor={diurnalFactor}
-          layers={layers}
-          zoomTarget={zoomTarget}
-          onZoomHandled={handleZoomHandled}
-        />
+        <div className="w-full h-full relative z-0 isolate">
+          <CorridorMap
+            stations={stations}
+            trackPositions={trackPositions}
+            selectedStationId={selectedStationId}
+            onSelectStation={handleStationClick}
+            isDrawerOpen={isDrawerOpen}
+            activePollutant={activePollutant}
+            diurnalFactor={diurnalFactor}
+            layers={layers}
+            zoomTarget={zoomTarget}
+            onZoomHandled={handleZoomHandled}
+          />
+        </div>
       )}
 
       {/* 2. Top-Left: India / UP / Corridor Zoom Presets Card */}
@@ -258,18 +260,18 @@ export function CorridorPage() {
       {/* 4. Slide-Out Station Inspection Drawer */}
       <aside
         id="drawer"
-        className={`absolute right-0 top-0 bottom-0 w-96 max-w-full bg-white border-l border-rail-border flex flex-col z-30 shadow-xl transition-transform duration-300 ${
-          isDrawerOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+        className={`absolute inset-y-0 right-0 w-80 sm:w-96 max-w-[calc(100vw-3rem)] sm:max-w-md bg-white border-l border-rail-border flex flex-col z-50 shadow-2xl transition-transform duration-300 ease-in-out ${
+          isDrawerOpen ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
         }`}
         aria-label="Station Inspection"
       >
-        <div className="p-4 border-b border-rail-border flex items-center justify-between bg-slate-50">
+        <div className="p-4 border-b border-rail-border flex items-center justify-between bg-slate-50 shrink-0">
           <span className="font-mono text-xs uppercase tracking-wider text-rail-navy font-semibold">
             Station Inspection
           </span>
           <button
             onClick={handleCloseDrawer}
-            className="text-rail-muted hover:text-rail-text px-2 py-1 rounded hover:bg-rail-light text-sm transition-colors"
+            className="w-7 h-7 rounded hover:bg-slate-200 text-rail-muted hover:text-rail-navy flex items-center justify-center text-sm font-bold transition-colors cursor-pointer"
             aria-label="Close"
           >
             ✕

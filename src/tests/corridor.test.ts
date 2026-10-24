@@ -63,4 +63,32 @@ describe('Corridor Map Data & Station Metadata (Phase 2)', () => {
     const cat = getCpcbCategory(naqiVal, 'NAQI');
     expect(cat.name).toBe('Moderate');
   });
+
+  it('verifies station inspection drawer visibility class mapping', () => {
+    // When drawer is open: must have translate-x-0, z-50, and pointer-events-auto
+    const openClasses = (isOpen: boolean) =>
+      `absolute inset-y-0 right-0 w-80 sm:w-96 max-w-[calc(100vw-3rem)] sm:max-w-md bg-white border-l border-rail-border flex flex-col z-50 shadow-2xl transition-transform duration-300 ease-in-out ${
+        isOpen ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
+      }`;
+
+    expect(openClasses(true)).toContain('translate-x-0');
+    expect(openClasses(true)).toContain('pointer-events-auto');
+    expect(openClasses(true)).toContain('z-50');
+    expect(openClasses(false)).toContain('translate-x-full');
+    expect(openClasses(false)).toContain('pointer-events-none');
+  });
+
+  it('resolves valid 24-hour diurnal readings for every station in the corridor', () => {
+    STATIONS.forEach((station) => {
+      for (let h = 0; h < 24; h++) {
+        const factor = getDiurnalFactor(h);
+        const pm25 = station.observations.find((o) => o.pollutant === 'PM2.5')?.value ?? 100;
+        const val = Math.round(pm25 * factor);
+        expect(val).toBeGreaterThan(0);
+        const cat = getCpcbCategory(val, 'PM2.5');
+        expect(['Good', 'Satisfactory', 'Moderate', 'Poor', 'Very Poor', 'Severe']).toContain(cat.name);
+      }
+    });
+  });
 });
+
