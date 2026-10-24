@@ -1,0 +1,80 @@
+@import 'leaflet/dist/leaflet.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0f1629; }
+  ::-webkit-scrollbar-thumb { background: #1e2d4d; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
+}
+
+@layer components {
+  .leaflet-container {
+    height: 100%;
+    width: 100%;
+    border-radius: 0.5rem;
+    background: #0a0f1e;
+  }
+  .leaflet-popup-content-wrapper {
+    background: #141d36;
+    color: #e2e8f0;
+    border: 1px solid #1e2d4d;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  }
+  .leaflet-popup-tip { background: #141d36; }
+  .leaflet-popup-close-button { color: #94a3b8 !important; }
+  .chart-tooltip {
+    background: #141d36 !important;
+    border: 1px solid #1e2d4d !important;
+    border-radius: 6px !important;
+    color: #e2e8f0 !important;
+  }
+  .kpi-card {
+    @apply bg-white rounded-xl border border-gray-200 p-4 shadow-sm;
+  }
+  .panel {
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+  }
+  .badge-simulated {
+    @apply text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200;
+  }
+  .badge-pm25 {
+    @apply text-xs font-medium px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700;
+  }
+  .badge-pm10 {
+    @apply text-xs font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700;
+  }
+  .btn-primary {
+    @apply bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm;
+  }
+  .btn-secondary {
+    @apply bg-navy-700 hover:bg-navy-600 text-slate-200 font-medium px-4 py-2 rounded-lg transition-colors text-sm border border-navy-600;
+  }
+  .btn-ghost {
+    @apply hover:bg-navy-700 text-slate-300 font-medium px-3 py-1.5 rounded-lg transition-colors text-sm;
+  }
+  .input-field {
+    @apply bg-navy-800 border border-navy-600 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-cyan-500 transition-colors;
+  }
+  .section-header {
+    @apply text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3;
+  }
+}
+
+@layer utilities {
+  .navy-950 { background-color: #020817; }
+  .navy-900 { background-color: #0a0f1e; }
+  .navy-800 { background-color: #0f1629; }
+  .navy-700 { background-color: #141d36; }
+  .navy-600 { background-color: #1a2540; }
+}
