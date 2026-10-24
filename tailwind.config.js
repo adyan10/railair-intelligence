@@ -38,6 +38,15 @@ export default {
           500: '#f59e0b',
           600: '#d97706',
         },
+        rail: {
+          navy: '#17365D',
+          deep: '#0F233D',
+          light: '#EAF0F6',
+          border: '#DCE3EA',
+          bg: '#F5F6F8',
+          text: '#192734',
+          muted: '#64748B',
+        },
         railway: {
           navy: '#17365D',
           dark: '#122b4a',

@@ -36,6 +36,29 @@
   .leaflet-popup-tip { background: #FFFFFF; }
   .leaflet-popup-close-button { color: #64748B !important; }
 
+  /* Custom Leaflet Tooltip Styling matching Claude prototype */
+  .leaflet-tooltip.station-label {
+    background-color: #FFFFFF !important;
+    border: 1px solid #DCE3EA !important;
+    color: #17365D !important;
+    font-family: 'JetBrains Mono', ui-monospace, monospace !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 3px 7px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+    border-radius: 3px !important;
+  }
+  .leaflet-tooltip-top:before, .leaflet-tooltip-bottom:before,
+  .leaflet-tooltip-left:before, .leaflet-tooltip-right:before {
+    display: none !important;
+  }
+  .leaflet-interactive {
+    transition: fill 0.5s, stroke-width 0.3s;
+  }
+  .bar {
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s, background-color 0.4s;
+  }
+
   .chart-tooltip {
     background: #FFFFFF !important;
     border: 1px solid #DCE3EA !important;

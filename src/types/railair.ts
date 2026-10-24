@@ -32,6 +32,8 @@ export interface Station {
   distanceFromOriginKm: number;
   observations: PollutionObservation[];
   provenance: DataProvenance;
+  platforms?: string;
+  sub?: string;
 }
 
 export interface PollutionObservation {

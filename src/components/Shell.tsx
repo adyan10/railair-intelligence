@@ -183,7 +183,7 @@ export function Shell() {
         <SimBanner />
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto relative flex flex-col min-h-0">
           <Outlet context={contextValue} />
         </main>
       </div>
