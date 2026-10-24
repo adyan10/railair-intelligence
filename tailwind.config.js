@@ -38,6 +38,21 @@ export default {
           500: '#f59e0b',
           600: '#d97706',
         },
+        railway: {
+          navy: '#17365D',
+          dark: '#122b4a',
+          canvas: '#F5F6F8',
+          border: '#DCE3EA',
+          text: '#192734',
+          muted: '#64748B',
+          card: '#FFFFFF',
+        },
+        cpcb: {
+          good: '#059669',
+          mod: '#F59E0B',
+          poor: '#EA580C',
+          severe: '#DC2626',
+        },
         surface: {
           DEFAULT: '#f8f9fb',
           card: '#ffffff',
@@ -47,6 +62,16 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
+      },
+      boxShadow: {
+        '2xs': '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+        'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+      },
+      dropShadow: {
+        'xs': '0 1px 1px rgba(0, 0, 0, 0.05)',
+      },
+      backdropBlur: {
+        'xs': '2px',
       },
     },
   },

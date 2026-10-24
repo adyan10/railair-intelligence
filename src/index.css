@@ -10,11 +10,13 @@
     margin: 0;
     padding: 0;
     font-family: 'Inter', system-ui, sans-serif;
+    background-color: #F5F6F8;
+    color: #192734;
   }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #0f1629; }
-  ::-webkit-scrollbar-thumb { background: #1e2d4d; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
+  ::-webkit-scrollbar-track { background: #F1F5F9; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 }
 
 @layer components {
@@ -22,59 +24,61 @@
     height: 100%;
     width: 100%;
     border-radius: 0.5rem;
-    background: #0a0f1e;
+    background: #F8FAFC;
   }
   .leaflet-popup-content-wrapper {
-    background: #141d36;
-    color: #e2e8f0;
-    border: 1px solid #1e2d4d;
+    background: #FFFFFF;
+    color: #192734;
+    border: 1px solid #DCE3EA;
     border-radius: 8px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
   }
-  .leaflet-popup-tip { background: #141d36; }
-  .leaflet-popup-close-button { color: #94a3b8 !important; }
+  .leaflet-popup-tip { background: #FFFFFF; }
+  .leaflet-popup-close-button { color: #64748B !important; }
+
   .chart-tooltip {
-    background: #141d36 !important;
-    border: 1px solid #1e2d4d !important;
-    border-radius: 6px !important;
-    color: #e2e8f0 !important;
+    background: #FFFFFF !important;
+    border: 1px solid #DCE3EA !important;
+    border-radius: 8px !important;
+    color: #192734 !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
   }
+
   .kpi-card {
-    @apply bg-navy-800 rounded-xl border border-navy-500 p-4 shadow-sm text-slate-200;
+    @apply bg-white rounded-xl border border-[#DCE3EA] p-4 shadow-xs;
   }
   .panel {
-    @apply bg-navy-800 rounded-xl border border-navy-500 shadow-sm text-slate-200;
+    @apply bg-white rounded-xl border border-[#DCE3EA] shadow-xs;
   }
   .badge-simulated {
-    @apply text-xs font-medium px-2 py-0.5 rounded-full bg-amber-950/60 text-amber-300 border border-amber-800/50;
+    @apply inline-flex items-center gap-1 text-[11px] font-mono font-medium px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-800;
   }
   .badge-pm25 {
-    @apply text-xs font-medium px-2 py-0.5 rounded-full bg-cyan-950/60 text-cyan-300 border border-cyan-800/50;
+    @apply text-xs font-mono font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200;
   }
   .badge-pm10 {
-    @apply text-xs font-medium px-2 py-0.5 rounded-full bg-teal-950/60 text-teal-300 border border-teal-800/50;
+    @apply text-xs font-mono font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200;
   }
   .btn-primary {
-    @apply bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm;
+    @apply bg-[#17365D] hover:bg-[#122b4a] text-white font-medium px-4 py-2 rounded-md transition-all text-sm shadow-xs active:scale-95;
   }
   .btn-secondary {
-    @apply bg-navy-700 hover:bg-navy-600 text-slate-200 font-medium px-4 py-2 rounded-lg transition-colors text-sm border border-navy-600;
+    @apply bg-white hover:bg-slate-50 text-[#17365D] font-medium px-4 py-2 rounded-md transition-all text-sm border border-[#DCE3EA] shadow-2xs;
   }
   .btn-ghost {
-    @apply hover:bg-navy-700 text-slate-300 font-medium px-3 py-1.5 rounded-lg transition-colors text-sm;
+    @apply hover:bg-slate-100 text-slate-700 font-medium px-3 py-1.5 rounded-md transition-colors text-sm;
   }
   .input-field {
-    @apply bg-navy-800 border border-navy-600 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-cyan-500 transition-colors;
+    @apply bg-white border border-[#DCE3EA] text-slate-800 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#17365D] transition-colors;
   }
   .section-header {
-    @apply text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3;
+    @apply text-xs font-mono font-semibold uppercase tracking-wider text-slate-500 mb-3;
   }
 }
 
 @layer utilities {
-  .navy-950 { background-color: #020817; }
-  .navy-900 { background-color: #0a0f1e; }
-  .navy-800 { background-color: #0f1629; }
-  .navy-700 { background-color: #141d36; }
-  .navy-600 { background-color: #1a2540; }
+  .bg-grid-canvas {
+    background-image: linear-gradient(#17365D 1px, transparent 1px), linear-gradient(90deg, #17365D 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
 }

@@ -6,7 +6,6 @@ import {
   Flame,
   FlaskConical,
   AlertTriangle,
-  Wind,
 } from 'lucide-react';
 import { SimBanner } from './SimBanner';
 
@@ -23,34 +22,34 @@ export function Shell() {
   const currentNav = NAV_ITEMS.find((n) => location.pathname.startsWith(n.to));
 
   return (
-    <div className="flex h-full bg-navy-950 text-slate-200 overflow-hidden">
+    <div className="flex h-full bg-[#F5F6F8] text-[#192734] overflow-hidden font-sans">
       {/* Sidebar */}
-      <aside className="w-56 flex-shrink-0 bg-navy-900 border-r border-navy-500 flex flex-col">
+      <aside className="w-60 flex-shrink-0 bg-[#17365D] border-r border-[#122b4a] flex flex-col text-slate-200 shadow-sm z-20">
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-navy-500">
-          <div className="w-8 h-8 rounded-lg bg-cyan-500 flex items-center justify-center flex-shrink-0">
-            <Wind className="w-4 h-4 text-white" />
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#1f426e]">
+          <div className="w-8 h-8 rounded bg-white text-[#17365D] flex items-center justify-center font-bold text-sm tracking-wider font-mono shadow-xs">
+            RA
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-sm text-white leading-tight">RailAir</div>
-            <div className="text-xs text-slate-400 leading-tight">Intelligence</div>
+            <div className="font-semibold text-sm text-white tracking-tight leading-tight">RailAir</div>
+            <div className="text-[10px] text-slate-300 font-mono tracking-tight leading-tight">Intelligence Prototype</div>
           </div>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 py-3 overflow-y-auto">
-          <p className="px-4 text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">
-            Dashboard
+        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+          <p className="px-3 text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-400 mb-2">
+            Navigation System
           </p>
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-mono font-medium transition-all duration-150 ${
                   isActive
-                    ? 'bg-navy-600 text-cyan-400 shadow-inner'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-navy-700'
+                    ? 'bg-white text-[#17365D] shadow-sm font-semibold'
+                    : 'text-slate-200 hover:text-white hover:bg-[#122b4a]'
                 }`
               }
             >
@@ -61,25 +60,35 @@ export function Shell() {
         </nav>
 
         {/* Footer */}
-        <div className="p-3 border-t border-navy-500">
-          <div className="text-xs text-slate-500 leading-relaxed">
-            v0.1-mvp · Simulation data only
+        <div className="p-3 border-t border-[#1f426e] text-[10px] font-mono text-slate-300">
+          <div className="flex items-center gap-1.5 text-emerald-300 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>GEO-PROVENANCE: ACTIVE</span>
           </div>
+          <div className="text-slate-400">Delhi Division · Simulated v0.1</div>
         </div>
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-[#F5F6F8]">
         {/* Top bar */}
-        <header className="flex-shrink-0 h-12 bg-navy-800 border-b border-navy-500 flex items-center px-5 gap-4">
-          <h1 className="text-sm font-semibold text-white">
-            {currentNav?.label ?? 'RailAir Intelligence'}
-          </h1>
-          <span className="text-slate-500 text-xs">·</span>
-          <span className="text-xs text-slate-400">Meerut → New Delhi Corridor</span>
-          <div className="ml-auto flex items-center gap-2">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-xs text-amber-400 font-medium">All data simulated</span>
+        <header className="flex-shrink-0 h-14 bg-white border-b border-[#DCE3EA] flex items-center justify-between px-6 z-20 shadow-2xs">
+          <div className="flex items-center space-x-3">
+            <h1 className="text-sm font-semibold text-[#17365D] tracking-tight">
+              {currentNav?.label ?? 'RailAir Intelligence'}
+            </h1>
+            <span className="text-slate-300 text-xs">/</span>
+            <span className="text-xs font-mono text-slate-500">Meerut → New Delhi Corridor (83 km · 7 Nodes)</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center space-x-2 text-xs font-mono text-[#64748B] bg-[#F8FAFC] border border-[#DCE3EA] px-3 py-1 rounded-md">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+              <span>NR FLEET SPEC: WAP-7</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-amber-200 bg-amber-50 text-[11px] text-amber-800 font-mono">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Simulated Sample Data</span>
+            </div>
           </div>
         </header>
 

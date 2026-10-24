@@ -21,60 +21,62 @@ function ChartTooltip({ active, payload, label }: {
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="chart-tooltip px-3 py-2 text-xs">
-      <div className="font-semibold text-slate-300 mb-1">{label}</div>
+    <div className="bg-white border border-[#DCE3EA] rounded-lg p-3 shadow-md text-xs font-mono">
+      <div className="font-semibold text-[#17365D] mb-1.5">{label} IST</div>
       {payload.map((p) => (
-        <div key={p.name} style={{ color: p.color }} className="flex gap-2 justify-between">
-          <span>{p.name}</span>
-          <span className="font-mono">{p.value} µg/m³</span>
+        <div key={p.name} style={{ color: p.color }} className="flex gap-4 justify-between py-0.5">
+          <span className="font-medium">{p.name}:</span>
+          <span className="font-bold">{p.value} µg/m³</span>
         </div>
       ))}
-      <div className="mt-1 text-amber-400 text-[10px]">⚠ Simulated values</div>
+      <div className="mt-2 text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+        Simulated Diurnal Profile
+      </div>
     </div>
   );
 }
 
 export function TrendChart({ data }: Props) {
   return (
-    <div className="h-56">
+    <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e2d4d" />
+        <LineChart data={data} margin={{ top: 8, right: 16, left: -10, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
           <XAxis
             dataKey="time"
-            tick={{ fill: '#94a3b8', fontSize: 11 }}
-            axisLine={{ stroke: '#1e2d4d' }}
+            tick={{ fill: '#64748B', fontSize: 11, fontFamily: 'monospace' }}
+            axisLine={{ stroke: '#CBD5E1' }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fill: '#94a3b8', fontSize: 11 }}
+            tick={{ fill: '#64748B', fontSize: 11, fontFamily: 'monospace' }}
             axisLine={false}
             tickLine={false}
             unit=" µg"
           />
           <Tooltip content={<ChartTooltip />} />
           <Legend
-            wrapperStyle={{ fontSize: 11, color: '#94a3b8' }}
+            wrapperStyle={{ fontSize: 11, color: '#475569', paddingTop: 12, fontFamily: 'monospace' }}
             iconType="circle"
             iconSize={8}
           />
           <Line
             type="monotone"
             dataKey="pm25"
-            name="PM2.5"
-            stroke="#06b6d4"
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4, fill: '#06b6d4' }}
+            name="PM2.5 (Fine Particulate)"
+            stroke="#D97706"
+            strokeWidth={2.5}
+            dot={{ r: 3, fill: '#D97706', strokeWidth: 0 }}
+            activeDot={{ r: 5, fill: '#D97706' }}
           />
           <Line
             type="monotone"
             dataKey="pm10"
-            name="PM10"
-            stroke="#14b8a6"
+            name="PM10 (Coarse Particulate)"
+            stroke="#7C3AED"
             strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4, fill: '#14b8a6' }}
+            dot={{ r: 2.5, fill: '#7C3AED', strokeWidth: 0 }}
+            activeDot={{ r: 5, fill: '#7C3AED' }}
           />
         </LineChart>
       </ResponsiveContainer>
