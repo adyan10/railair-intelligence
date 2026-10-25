@@ -35,3 +35,6 @@ htmlcov/
 *.egg-info/
 .env
 
+
+# Large environmental source datasets
+/backend-resources/zenodo-data/pm25-full_rel-2026-07-r0_s-1.0_mb-1.3-r0.nc
