@@ -71,6 +71,23 @@ export interface JourneySegmentEstimate {
   pm10ExposureProxy: number;  // ?g?h/m?
 }
 
+export interface TrainServiceOption {
+  trainNo: string;
+  trainName: string;
+  originStationName: string;
+  destinationStationName: string;
+  departureTime: string;
+  arrivalTime: string;
+  departureDay: number;
+  arrivalDay: number;
+  durationMinutes: number;
+  snapshot: string;
+  qualityFlag: string;
+  intermediateStops: string[];
+  stopsCount: number;
+  crossesMidnight: boolean;
+}
+
 export interface JourneyEstimate {
   id: string;
   label: string;
@@ -81,7 +98,11 @@ export interface JourneyEstimate {
   totalPm25ExposureProxy: number;
   totalPm10ExposureProxy: number;
   calculationNote: string;
+  selectedTrain?: TrainServiceOption;
+  isHistoricalSchedule?: boolean;
+  scheduleUnavailable?: boolean;
 }
+
 
 export interface Hotspot {
   id: string;

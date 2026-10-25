@@ -1,0 +1,85 @@
+{
+  "title": "RailAir Intelligence Corridor Historical Railway Timetable",
+  "description": "Historical stop-level timetable records for the 7 Meerut-Ghaziabad-Delhi stations",
+  "source": "backend-resources/claude-rail-timings/ (train_stops.csv & trains.csv)",
+  "snapshots": [
+    "2017-12-22",
+    "2015-08-03"
+  ],
+  "disclaimer": "Historical snapshot data only. Not a real-time or guaranteed schedule.",
+  "corridorStations": {
+    "MRT": {
+      "code": "MTC",
+      "name": "Meerut City Junction"
+    },
+    "MMU": {
+      "code": "MDNR",
+      "name": "Modinagar"
+    },
+    "MNR": {
+      "code": "MUD",
+      "name": "Muradnagar"
+    },
+    "GZB": {
+      "code": "GZB",
+      "name": "Ghaziabad Junction"
+    },
+    "SAH": {
+      "code": "SBB",
+      "name": "Sahibabad Junction"
+    },
+    "DSO": {
+      "code": "DSA",
+      "name": "Delhi Shahdara Junction"
+    },
+    "NDLS": {
+      "code": "NDLS",
+      "name": "New Delhi Railway Station"
+    }
+  },
+  "totalCorridorTrains": 203,
+  "pairConnectivity": {
+    "DSO->GZB": 36,
+    "DSO->MMU": 7,
+    "DSO->MNR": 5,
+    "DSO->MRT": 7,
+    "DSO->NDLS": 8,
+    "DSO->SAH": 30,
+    "GZB->DSO": 38,
+    "GZB->MMU": 16,
+    "GZB->MNR": 11,
+    "GZB->MRT": 29,
+    "GZB->NDLS": 54,
+    "GZB->SAH": 60,
+    "MMU->DSO": 8,
+    "MMU->GZB": 17,
+    "MMU->MNR": 11,
+    "MMU->MRT": 16,
+    "MMU->NDLS": 5,
+    "MMU->SAH": 11,
+    "MNR->DSO": 6,
+    "MNR->GZB": 11,
+    "MNR->MMU": 11,
+    "MNR->MRT": 11,
+    "MNR->NDLS": 3,
+    "MNR->SAH": 10,
+    "MRT->DSO": 8,
+    "MRT->GZB": 30,
+    "MRT->MMU": 17,
+    "MRT->MNR": 11,
+    "MRT->NDLS": 8,
+    "MRT->SAH": 11,
+    "NDLS->DSO": 7,
+    "NDLS->GZB": 50,
+    "NDLS->MMU": 5,
+    "NDLS->MNR": 3,
+    "NDLS->MRT": 8,
+    "NDLS->SAH": 30,
+    "SAH->DSO": 30,
+    "SAH->GZB": 59,
+    "SAH->MMU": 10,
+    "SAH->MNR": 10,
+    "SAH->MRT": 10,
+    "SAH->NDLS": 32
+  }
+}

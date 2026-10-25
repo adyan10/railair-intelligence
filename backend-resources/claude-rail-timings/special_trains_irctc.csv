@@ -1,0 +1,229 @@
+list_table,list_row_no,train_no,train_name,from_station,from_code,departure,departure_day,to_station,to_code,arrival,arrival_day,journey_minutes,frequency,days,days_per_week,owning_rly,owning_rly_basis,days_raw,from_code_basis,to_code_basis
+1,1,01015,LTT GKP SPL,Lokmanyatilak (T),LTT,22:45,1,Gorakhpur,GKP,07:05,3,1940,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,pair,All Days,alias,alias
+1,2,01016,KUSHINAGAR SPL,Gorakhpur,GKP,19:00,1,Lokmanyatilak (T),LTT,04:20,3,2000,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,listed,All Days,alias,alias
+1,3,01019,CSMT BBS SPL,Mumbai CST,CSTM,15:05,1,Bhubaneswar,BBS,04:35,3,2250,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,listed,All Days,alias,alias
+1,4,01020,BBS CSMT SPL,Bhubaneswar,BBS,15:25,1,Mumbai CST,CSTM,03:55,3,2190,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,pair,All Days,alias,alias
+1,5,01061,LTT DBG SPL,Lokmanyatilak (T),LTT,12:15,1,Darbhanga,DBG,01:10,3,2215,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,listed,All Days,alias,alias
+1,6,01062,DBG LTT SPL,Darbhanga,DBG,13:05,1,Lokmanyatilak (T),LTT,03:40,3,2315,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,pair,All Days,alias,alias
+1,7,01071,LTT BSB SPL,Lokmanyatilak (T),LTT,12:40,1,Varanasi,BSB,19:25,2,1845,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,listed,All Days,alias,alias
+1,8,01072,KAMAYANI EXP SPL,Varanasi,BSB,15:50,1,Lokmanyatilak (T),LTT,22:50,2,1860,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,pair,All Days,alias,alias
+1,9,01093,CSMT BSB SPL,Mumbai CST,CSTM,00:10,1,Varanasi,BSB,04:40,2,1710,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,listed,All Days,alias,alias
+1,10,01094,MAHANAGARI SPL,Varanasi,BSB,11:20,1,Mumbai CST,CSTM,14:15,2,1615,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,pair,All Days,alias,alias
+1,11,01139,CSMT GDG SPL,Mumbai CST,CSTM,21:20,1,Gadag,GDG,12:20,2,900,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,listed,All Days,alias,alias
+1,12,01140,GDG CSMT EXP,Gadag,GDG,13:40,1,Mumbai CST,CSTM,05:10,2,930,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,pair,All Days,alias,alias
+1,13,01301,CSMT SBC SPL,Mumbai CST,CSTM,08:10,1,Ksr Bengaluru,SBC,08:50,2,1480,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,listed,All Days,alias,alias
+1,14,01302,UDYAN EXP,Ksr Bengaluru,SBC,20:30,1,Mumbai CST,CSTM,20:15,2,1425,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,pair,All Days,alias,alias
+1,15,02155,HBJ NZM SPL,Habibganj,HBJ,21:05,1,H. Nizamuddin,NZM,08:00,2,655,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WCR,pair,All Days,alias,alias
+1,16,02156,NZM HBJ SPL,H. Nizamuddin,NZM,20:55,1,Habibganj,HBJ,07:05,2,610,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WCR,listed,All Days,alias,alias
+1,17,02229,LUCKNOW MAIL SPL,Lucknow Jn,,22:00,1,New Delhi,NDLS,06:50,2,530,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NR,pair,All Days,ambiguous,alias
+1,18,02230,LUCKNOW MAIL SPL,New Delhi,NDLS,22:05,1,Lucknow Jn,,06:55,2,530,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NR,listed,All Days,alias,ambiguous
+1,19,02295,SANGHAMITRA EXP,Ksr Bengaluru,SBC,10:00,1,Danapur,DNR,09:05,3,2825,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,pair,All Days,alias,alias
+1,20,02296,DNR SBC SPL,Danapur,DNR,20:10,1,Ksr Bengaluru,SBC,20:20,3,2890,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,listed,All Days,alias,alias
+1,21,02377,SDAH NOQ SPL,Sealdah,SDAH,23:20,1,New Alipurduar,NOQ,12:20,2,780,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ER,listed,All Days,alias,alias
+1,22,02378,NOQ SDAH SPECIAL,New Alipurduar,NOQ,17:45,1,Sealdah,SDAH,06:45,2,780,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ER,pair,All Days,alias,alias
+1,23,02391,RGD NDLS SPL,Rajgir,RGD,08:00,1,New Delhi,NDLS,04:45,2,1245,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,pair,All Days,alias,alias
+1,24,02392,SHRAMJIVI EXP SP,New Delhi,NDLS,13:10,1,Rajgir,RGD,10:30,2,1280,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,listed,All Days,alias,alias
+1,25,02393,RJPB NDLS SPL,Rajendra Nagar,RJPB,17:45,1,New Delhi,NDLS,07:50,2,845,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,pair,All Days,alias,alias
+1,26,02394,SAMPOORN K SPL,New Delhi,NDLS,17:25,1,Rajendra Nagar,RJPB,07:35,2,850,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,listed,All Days,alias,alias
+1,27,02417,PRAYAG RAJ SPL,Prayagraj,,21:30,1,New Delhi,NDLS,07:00,2,570,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NCR,pair,All Days,unmatched,alias
+1,28,02418,PRAYAG RAJ SPL,New Delhi,NDLS,21:20,1,Prayagraj,,07:15,2,595,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NCR,listed,All Days,alias,unmatched
+1,29,02419,GOMTI EXP SPL,Lucknow,LKO,06:00,1,New Delhi,NDLS,15:05,1,545,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NCR,pair,All Days,alias,alias
+1,30,02420,GOMTI EXP SPL,New Delhi,NDLS,12:25,1,Lucknow,LKO,22:00,1,575,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NCR,listed,All Days,alias,alias
+1,31,02407,NJP ASR SPECIAL,NJP,NJP,08:15,1,ASR,ASR,17:35,2,2000,Weekly,WED,1,NR,listed,WED,is-code,is-code
+1,32,02408,KARAMBHUMI SPL,ASR,ASR,09:30,1,NJP,NJP,18:30,2,1980,Weekly,FRI,1,NR,pair,FRI,is-code,is-code
+1,33,02357,KOAA ASR SPL,Kolkata,KOAA,12:10,1,Amritsar,ASR,17:20,2,1750,Bi Weekly,"TUE,SAT",2,ER,listed,"TUE,SAT",alias,alias
+1,34,02358,ASR KOAA SUP SPL,Amritsar,ASR,05:55,1,Kolkata,KOAA,11:35,2,1780,Bi Weekly,"MON,THU",2,ER,pair,"MON,THU",alias,alias
+1,35,02451,SHRAM SHKTI SPL,Kanpur,CNB,23:45,1,New Delhi,NDLS,06:30,2,405,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NCR,pair,All Days,alias,alias
+1,36,02452,SHRAM SHKTI SPL,New Delhi,NDLS,23:55,1,Kanpur,CNB,06:30,2,395,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NCR,listed,All Days,alias,alias
+1,37,02463,RAJST S KRAT SPL,Delhi S Rohilla,DEE,22:25,1,Jodhpur,JU,09:00,2,635,Tri Weekly,"WED,FRI,SUN",3,NWR,listed,"WED,FRI,SUN",alias,alias
+1,38,02464,RJSTHN S KRN SPL,Jodhpur,JU,19:00,1,Delhi S Rohilla,DEE,05:40,2,640,Tri Weekly,"TUE,THU,SAT",3,NWR,pair,"TUE,THU,SAT",alias,alias
+1,39,02477,JU JP SF SPL,Jodhpur,JU,16:00,1,Jaipur,JP,21:15,1,315,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NWR,listed,All Days,alias,alias
+1,40,02478,JP JU SF SPL,Jaipur,JP,06:00,1,Jodhpur,JU,10:55,1,295,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NWR,pair,All Days,alias,alias
+1,41,02479,SURYA NAGRI SPL,Jodhpur,JU,19:00,1,Bandra,BDTS,11:35,2,995,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NWR,listed,All Days,alias,alias
+1,42,02480,BDTS JU SPL,Bandra,BDTS,13:30,1,Jodhpur,JU,06:30,2,1020,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NWR,pair,All Days,alias,alias
+1,43,02533,PUSHPAK EXP SPL,Lucknow Jn,,19:20,1,Mumbai CST,CSTM,20:15,2,1495,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NER,listed,All Days,ambiguous,alias
+1,44,02534,CSMT LJN SPL,Mumbai CST,CSTM,08:25,1,Lucknow Jn,,08:40,2,1455,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NER,pair,All Days,alias,ambiguous
+1,45,02555,GORAKDAM EXP SPL,Gorakhpur,GKP,16:35,1,Hisar,HSR,10:00,2,1045,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NER,listed,All Days,alias,alias
+1,46,02556,GORAKDAM SPL,Hisar,HSR,16:45,1,Gorakhpur,GKP,09:45,2,1020,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NER,pair,All Days,alias,alias
+1,47,02559,SHIV GANGA SPL,Manduadih,MUV,19:55,1,New Delhi,NDLS,08:10,2,735,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NER,pair,All Days,alias,alias
+1,48,02560,SHIV GNG EXP SPL,New Delhi,NDLS,18:55,1,Manduadih,MUV,06:50,2,715,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NER,listed,All Days,alias,alias
+1,49,02617,MANGLADWEEP EXP,Ernakulam,ERS,10:50,1,H. Nizamuddin,NZM,13:15,3,3025,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SR,pair,All Days,alias,alias
+1,50,02618,MNGLA LKSDP SPL,H. Nizamuddin,NZM,09:15,1,Ernakulam,ERS,12:15,3,3060,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SR,listed,All Days,alias,alias
+1,51,04009,BMKI ANVT SPL,Bapudham Motihari,BMKI,21:10,1,Anand Vihar,ANVT,18:15,2,1265,Weekly,SUN,1,NR,listed,SUN,alias,alias
+1,52,04010,CHAMPRN SGR SPL,Anand Vihar,ANVT,23:45,1,Bapudham Motihari,BMKI,20:00,2,1215,Weekly,SAT,1,NR,pair,SAT,alias,alias
+1,53,02629,SAMPARK KRANTI,Yesvantpur,YPR,13:55,1,H. Nizamuddin,NZM,13:00,3,2825,Bi Weekly,"TUE,THU",2,SWR,listed,"TUE,THU",exact-name,alias
+1,54,02630,YPR S KRNTI SPL,H. Nizamuddin,NZM,08:45,1,Yesvantpur,YPR,06:21,3,2736,Bi Weekly,"WED,FRI",2,SWR,pair,"WED,FRI",alias,exact-name
+1,55,02701,CSMT HYB SPL,Mumbai CST,CSTM,21:50,1,Hyderabad,HYB,12:10,2,860,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,listed,All Days,alias,alias
+1,56,02702,HYB CSMT,Hyderabad,HYB,14:50,1,Mumbai CST,CSTM,04:55,2,845,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,pair,All Days,alias,alias
+1,57,02703,HWH SC SPL,Howrah,HWH,07:25,1,Secunderabad,SC,09:15,2,1550,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,listed,All Days,alias,alias
+1,58,02704,SC HWH SPL,Secunderabad,SC,15:55,1,Howrah,HWH,17:55,2,1560,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,pair,All Days,alias,alias
+1,59,02715,SACHKHAND SPL,H. S. Nanded,NED,09:30,1,Amritsar,ASR,20:25,2,2095,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,listed,All Days,alias,alias
+1,60,02716,ASR NED EXP SPL,Amritsar,ASR,05:30,1,H. S. Nanded,NED,16:00,2,2070,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,pair,All Days,alias,alias
+1,61,02723,HYB NDLS SPL,Hyderabad,HYB,06:25,1,New Delhi,NDLS,09:05,2,1600,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,pair,All Days,alias,alias
+1,62,02724,TELANGANA E SPL,New Delhi,NDLS,17:25,1,Hyderabad,HYB,19:35,2,1570,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,listed,All Days,alias,alias
+1,63,02791,SC DNR SPL,Secunderabad,SC,09:35,1,Danapur,DNR,18:55,2,2000,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,pair,All Days,alias,alias
+1,64,02792,DNR SC SPL,Danapur,DNR,12:15,1,Secunderabad,SC,21:30,2,1995,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,listed,All Days,alias,alias
+1,65,02801,PURI NDLS SPL,Bhubaneswar,BBS,23:07,1,New Delhi,NDLS,04:20,3,1753,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECoR,listed,All Days,alias,alias
+1,66,02802,PURSHOTTAM SPL,New Delhi,NDLS,22:25,1,Bhubaneswar,BBS,03:45,3,1760,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECoR,pair,All Days,alias,alias
+1,67,02809,CSMT HWH SPL,Mumbai CST,CSTM,20:35,1,Howrah,HWH,05:50,3,1995,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SER,pair,All Days,alias,alias
+1,68,02810,HWH CSMT SPL,Howrah,HWH,20:00,1,Mumbai CST,CSTM,05:20,3,2000,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SER,listed,All Days,alias,alias
+1,69,02833,ADI HWH SPL,Ahmedabad,ADI,00:15,1,Howrah,HWH,13:30,2,2235,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SER,listed,All Days,alias,alias
+1,70,02834,HWH ADI SPL,Howrah,HWH,23:55,1,Ahmedabad,ADI,13:25,2,810,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SER,pair,All Days,alias,alias
+1,71,02903,MMCT ASR SPL,Mumbai Central,BCT,21:25,1,Amritsar,ASR,05:30,3,1925,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,pair,All Days,alias,alias
+1,72,02904,GOLDN TEMPLE SPL,Amritsar,ASR,21:25,1,Mumbai Central,BCT,05:05,3,1900,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,listed,All Days,alias,alias
+1,73,02915,ADI DLI SPL,Ahmedabad,ADI,18:55,1,Delhi,DLI,10:10,2,915,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,pair,All Days,alias,alias
+1,74,02916,ASHRAM EXP SPL,Delhi,DLI,15:20,1,Ahmedabad,ADI,07:40,2,980,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,listed,All Days,alias,alias
+1,75,02925,BDTS ASR SPL,Bandra (T),BDTS,12:00,1,Amritsar,ASR,19:20,2,1880,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,pair,All Days,alias,alias
+1,76,02926,PASCHIM EXP SPL,Amritsar,ASR,08:10,1,Bandra (T),BDTS,14:45,2,1835,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,listed,All Days,alias,alias
+1,77,02933,MMCT ADI SPL,Mumbai Central,BCT,13:40,1,Ahmedabad,ADI,21:25,1,465,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,listed,All Days,alias,alias
+1,78,02934,ADI MMCT SPL,Ahmedabad,ADI,04:55,1,Mumbai Central,BCT,12:35,1,460,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,pair,All Days,alias,alias
+1,79,02963,MEWAR EXP SPL,H. Nizamuddin,NZM,19:00,1,Udaipur City,UDZ,07:20,2,740,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NWR,listed,All Days,alias,alias
+1,80,02964,MEWAR SPL,Udaipur City,UDZ,18:15,1,H. Nizamuddin,NZM,06:35,2,740,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NWR,pair,All Days,alias,alias
+1,81,08183,TATA DNR SPL,Tatanagar,TATA,08:15,1,Danapur,DNR,20:00,1,705,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SER,listed,All Days,alias,alias
+1,82,08184,DNR TATA EXP,Danapur,DNR,05:45,1,Tatanagar,TATA,17:20,1,695,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SER,pair,All Days,alias,alias
+1,83,05483,APDJ DLI SPECIAL,Alipurduar,APDJ,09:25,1,Delhi,DLI,22:40,2,2235,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NFR,pair,All Days,alias,alias
+1,84,05484,DLI APDJ SPL,Delhi,DLI,06:35,1,Alipurduar,APDJ,20:10,2,2255,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NFR,listed,All Days,alias,alias
+1,85,06345,LTT TVC SPL,Mumbai (LTT),LTT,11:40,1,Thiruvananthapuram Central,TVC,18:25,2,1845,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SR,listed,All Days,alias,alias
+1,86,06346,NETHRAVATHI,Thiruvananthapuram Central,TVC,09:30,1,Mumbai (LTT),LTT,16:40,2,1870,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SR,pair,All Days,alias,alias
+1,87,02805,VSKP NDLS SPL,Vishakapatnam,VSKP,22:00,1,New Delhi,NDLS,06:35,3,1955,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECoR,listed,All Days,alias,alias
+1,88,02806,NDLS VSKP AP SPL,New Delhi,NDLS,20:15,1,Vishakapatnam,VSKP,05:05,3,1970,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECoR,pair,All Days,alias,alias
+1,89,02181,JBP NZM SPL,Jabalpur,JBP,15:10,1,H. Nizamuddin,NZM,05:15,2,845,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WCR,pair,All Days,alias,alias
+1,90,02182,NZM JBP SF SPL,H. Nizamuddin,NZM,17:50,1,Jabalpur,JBP,08:20,2,870,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WCR,listed,All Days,alias,alias
+1,91,02417,PRAYAG RAJ SPL,Prayagraj Jn.,,21:30,1,New Delhi,NDLS,07:00,2,570,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NR,pair,All Days,unmatched,alias
+1,92,02418,PRAYAG RAJ SPL,New Delhi,NDLS,21:20,1,Prayagraj Jn.,,07:15,2,595,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NR,listed,All Days,alias,unmatched
+1,93,02955,MMCT JP SPL,Mumbai Central,BCT,18:50,1,jaipur,JP,12:45,2,1075,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,listed,All Days,alias,alias
+1,94,02956,JP MMCT SPL,jaipur,JP,14:00,1,Mumbai Central,BCT,07:40,2,1060,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,pair,All Days,alias,alias
+1,95,07201,GNT SC SPL,Guntur,GNT,06:00,1,Secunderabad,SC,13:50,1,470,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,listed,All Days,alias,alias
+1,96,07202,SC GNT SPL,Secunderabad,SC,12:30,1,Guntur,GNT,21:15,1,525,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,pair,All Days,alias,alias
+1,97,02793,TPTY NZB SPL,Tirupati,TPTY,16:25,1,Nizamabad,NZB,08:38,2,973,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,listed,All Days,alias,alias
+1,98,02794,RAYALASEEMA SPL,Nizamabad,NZB,14:05,1,Tirupati,TPTY,06:15,2,970,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,pair,All Days,alias,alias
+1,99,09165,ADI DBG SPL,Ahmedabad,ADI,21:00,1,Darbhanga,DBG,19:15,3,2775,Tri Weekly,"WED,FRI,SUN",3,WR,listed,"WED,FRI,SUN",alias,alias
+1,100,09166,DBG ADI EXP,Darbhanga,DBG,04:35,1,Ahmedabad,ADI,03:25,3,2810,Tri Weekly,"MON,WED,SAT",3,WR,pair,"MON,WED,SAT",alias,alias
+1,101,09167,ADI BSB SPL,Ahmedabad,ADI,21:00,1,Varanasi,BSB,09:35,3,2195,4 days,"MON,TUE,THU,SAT",4,WR,listed,"MON,TUE,THU,SAT",alias,alias
+1,102,09168,SABARMATI SPL,Varanasi,BSB,14:13,1,Ahmedabad,ADI,03:25,3,2232,4 days,"TUE,THU,FRI,SUN",4,WR,pair,"TUE,THU,FRI,SUN",alias,alias
+1,103,09045,ST CPR SPL,Surat,ST,09:55,1,Chhapra,CPR,18:35,2,1960,5 days,"MON,WED,THU,FRI,SUN",5,WR,listed,"MON,WED,THU,FRI,SUN",alias,alias
+1,104,09046,TAPTI GANGA SPL,Chhapra,CPR,09:00,1,Surat,ST,18:40,2,2020,5 days,"TUE,WED,FRI,SAT,SUN",5,WR,pair,"TUE,WED,FRI,SAT,SUN",alias,alias
+1,105,03201,PNBE LTT SPL,Patna,PNBE,23:55,1,Lokmanyatilak (T),LTT,11:30,3,2135,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,listed,All Days,alias,alias
+1,106,03202,LTT PATNA SPL,Lokmanyatilak (T),LTT,22:15,1,Patna,PNBE,10:00,3,2145,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,pair,All Days,alias,alias
+1,107,02553,SHC NDLS SPECIAL,Saharsa,SHC,06:45,1,New Delhi,NDLS,06:40,2,1435,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,listed,All Days,alias,alias
+1,108,02554,VAISHALI SPL,New Delhi,NDLS,19:50,1,Saharsa,SHC,20:30,2,1480,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,pair,All Days,alias,alias
+1,109,02307,HWH JU SPL,Howrah,HWH,23:40,1,Jodhpu/Bikaner,,07:00,3,1880,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ER,listed,All Days,alias,unmatched
+1,110,02308,JU HWH SF SPL,Jodhpu/Bikaner,,20:00,1,Howrah,HWH,04:15,3,1935,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ER,pair,All Days,unmatched,alias
+1,111,02381,HWH NDLS SPL,Howrah,HWH,08:15,1,New Delhi,NDLS,06:05,2,1310,Tri Weekly,"WED,THU,SUN",3,ER,listed,"WED,THU,SUN",alias,alias
+1,112,02382,POORVA EXP SPL,New Delhi,NDLS,17:35,1,Howrah,HWH,17:15,2,1420,Tri Weekly,"MON,TUE,FRI",3,ER,pair,"MON,TUE,FRI",alias,alias
+1,113,02303,HWH NDLS SPL,Howrah,HWH,08:00,1,New Delhi,NDLS,06:05,2,1325,4 days,"MON,TUE,FRI,SAT",4,ER,listed,"MON,TUE,FRI,SAT",alias,alias
+1,114,02304,POORVA EXP SPL,New Delhi,NDLS,17:35,1,Howrah,HWH,17:15,2,1420,4 days,"WED,THU,SAT,SUN",4,ER,pair,"WED,THU,SAT,SUN",alias,alias
+1,115,02141,LTT PPTA SPL,Lokmanyatilak (T),LTT,23:35,1,Patliputra,PPTA,04:45,3,1750,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,listed,All Days,alias,alias
+1,116,02142,PPTA LTT SPL,Patliputra,PPTA,10:45,1,Lokmanyatilak (T),LTT,15:15,2,1710,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,pair,All Days,alias,alias
+1,117,02557,MFP ANVT SPL,Muzaffarpur,MFP,11:35,1,Anand Vihar,ANVT,07:40,2,1205,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,listed,All Days,alias,alias
+1,118,02558,SAPT KRANTI SPL,Anand Vihar,ANVT,14:50,1,Muzaffarpur,MFP,12:15,2,1285,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,pair,All Days,alias,alias
+1,119,05273,RXL ANVT SPL,Raxaul,RXL,08:30,1,Anand Vihar,ANVT,09:00,2,1470,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,listed,All Days,alias,alias
+1,120,05274,SATYAGRAH SPL,Anand Vihar,ANVT,17:25,1,Raxaul,RXL,17:40,2,1455,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,pair,All Days,alias,alias
+1,121,02419,GOMTI EXP SPL,Lucknow,LKO,06:00,1,New Delhi,NDLS,15:05,1,545,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NR,listed,All Days,alias,alias
+1,122,02420,GOMTI EXP SPL,New Delhi,NDLS,12:25,1,Lucknow,LKO,22:00,1,575,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NR,pair,All Days,alias,alias
+1,123,02433,MAS NDLS EXP,Chennai,MAS,06:35,1,New Delhi,NDLS,10:30,2,1675,Bi Weekly,"WED,SAT",2,NR,listed,"WED,SAT",alias,alias
+1,124,02434,NDLS MAS SPL,New Delhi,NDLS,16:00,1,Chennai,MAS,20:40,2,1720,Bi Weekly,"MON,THU",2,NR,pair,"MON,THU",alias,alias
+1,125,09041,BDTS GCT SPL,Bandra (T),BDTS,23:25,1,Ghazipur,GCT,10:30,3,2105,Bi Weekly,"FRI,SUN",2,WR,listed,"FRI,SUN",alias,alias
+1,126,09042,GCT BDTS SPL,Ghazipur,GCT,19:30,1,Bandra (T),BDTS,07:50,3,2180,Bi Weekly,"TUE,SUN",2,WR,pair,"TYE,SUN",alias,alias
+1,127,04673,JYG ASR SPL,Jaynagar,JYG,07:15,1,Amritsar,ASR,23:55,2,2440,4 days,"MON,WED,THU,SAT",4,NR,listed,"MON,WED,THU,SAT",alias,alias
+1,128,04674,SHAHEED EXP SPL,Amritsar,ASR,11:55,1,Jaynagar,JYG,01:00,3,2225,4 days,"TUE,THU,FRI,SUN",4,NR,pair,"TUE,THU,FRI,SUN",alias,alias
+1,129,04649,JYG ASR SPECIAL,Jaynagar,JYG,07:15,1,Amritsar,ASR,23:55,3,3880,Tri Weekly,"TUE,FRI,SUN",3,NR,listed,"TUE,FRI,SUN",alias,alias
+1,130,04650,SARYU YAMUNA SPL,Amritsar,ASR,11:55,1,Jaynagar,JYG,01:00,3,2225,Tri Weekly,"MON,WED,SAT",3,NR,pair,"MON,WED,SAT",alias,alias
+1,131,02541,GKP LTT SUP SPL,Gorakhpur,GKP,21:50,1,Lokmanyatilak (T),LTT,04:00,3,1810,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NER,listed,All Days,alias,alias
+1,132,02542,LTT GKP SPL,Lokmanyatilak (T),LTT,11:10,1,Gorakhpur,GKP,17:00,2,1790,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NER,pair,All Days,alias,alias
+1,133,05955,DBRG DLI SPECIAL,Dibrugarh,DBRG,23:25,1,Delhi,DLI,06:05,4,3280,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NFR,listed,All Days,alias,alias
+1,134,05956,BRAHMPUTRA SPL,Delhi,DLI,23:40,1,Dibrugarh,DBRG,04:25,4,3165,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NFR,pair,All Days,alias,alias
+1,135,02149,PUNE DNR SPL,Pune,PUNE,20:55,1,Danapur,DNR,03:45,3,1850,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,listed,All Days,alias,alias
+1,136,02150,DNR PUNE SPECIAL,Danapur,DNR,22:55,1,Pune,PUNE,05:30,3,1835,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,CR,pair,All Days,alias,alias
+1,137,02947,ADI PNBE SPL,Ahmedabad,ADI,21:50,1,Patna,PNBE,04:30,3,1840,Bi Weekly,"MON,WED",2,WR,listed,"MON,WED",alias,alias
+1,138,02948,PNBE ADI SPL,Patna,PNBE,23:35,1,Ahmedabad,ADI,04:45,3,1750,Bi Weekly,"WED,FRI",2,WR,pair,"WED,FRI",alias,alias
+1,139,05645,LTT GHY SPL,Lokmanyatilak (T),LTT,08:05,1,Guwahati,GHY,12:00,3,3115,Bi Weekly,"WED,SAT",2,NFR,listed,"WED,SAT",alias,alias
+1,140,05646,GHY LTT SPECIAL,Guwahati,GHY,16:55,1,Lokmanyatilak (T),LTT,20:00,3,3065,Bi Weekly,"WED,SUN",2,NFR,pair,"WED,SUN",alias,alias
+1,141,02727,VSKP HYB SF SPL,Vishakapatnam,VSKP,17:20,1,Hydrabad,HYB,06:15,2,775,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,listed,All Days,alias,alias
+1,142,02728,HYB VSKP SPL,Hydrabad,HYB,17:15,1,Vishakapatnam,VSKP,05:50,2,755,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SCR,pair,All Days,alias,alias
+1,143,09083,ADI MFP SPL,Ahmedabad,ADI,22:00,1,Muzaffarpur,MFP,04:30,3,1830,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,listed,All Days,alias,alias
+1,144,09084,MFP ADI SPL,Muzaffarpur,MFP,07:30,1,Ahmedabad,ADI,14:00,2,1830,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,pair,All Days,alias,alias
+1,145,09089,ADI GKP SPL,Ahmedabad,ADI,23:45,1,Gorakhpur,GKP,05:40,3,1795,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,listed,All Days,alias,alias
+1,146,09090,GKP ADI SPL,Gorakhpur,GKP,10:00,1,Ahmedabad,ADI,18:35,2,1955,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WR,pair,All Days,alias,alias
+1,147,02245,HWH YPR SPL,Howrah,HWH,10:50,1,Yasvantpur,YPR,16:00,2,1750,Five Days,"TUE,WED,FRI,SAT,SUN",5,SER,listed,"TUE,WED,FRI,SAT,SUN",alias,alias
+1,148,02246,DURONTO EXPRESS,Yasvantpur,YPR,11:00,1,Howrah,HWH,16:45,2,1785,Five Days,"MON,TUE,THU,FRI,SUN",5,SER,pair,"MON,TUE,THU,FRI,SUN",alias,alias
+1,149,02201,SDAH PURI SPL,Sealdah,SDAH,20:00,1,Bhubaneswar,BBS,03:34,2,454,Tri Weekly,"MON,WED,FRI",3,ER,listed,"MON,WED,FRI",alias,alias
+1,150,02202,PURI SDAH SPL,Bhubaneswar,BBS,20:15,1,Sealdah,SDAH,04:15,2,480,Tri Weekly,"TUE,THU,SAT",3,ER,pair,"TUE,THU,SAT",alias,alias
+1,151,02213,SHM PNBE SPL,Shalimar,SHM,22:00,1,Patna,PNBE,06:40,2,520,Tri Weekly,"MON,WED,FRI",3,SER,listed,"MON,WED,FRI",alias,alias
+1,152,02214,PNBE SHM SPL,Patna,PNBE,20:40,1,Shalimar,SHM,05:40,2,540,Tri Weekly,"TUE,THU,SAT",3,SER,pair,"TUE,THU,SAT",alias,alias
+1,153,02283,ERS NZM DURONTO,Ernakulam,ERS,23:25,1,Nizamuddin,NZM,19:40,3,2655,Weekly,TUE,1,NR,listed,TUE,alias,alias
+1,154,02284,ERS DURONTO SPL,Nizamuddin,NZM,21:35,1,Ernakulam,ERS,16:10,3,2555,Weekly,SAT,1,NR,pair,SAT,alias,alias
+1,155,02285,NZM DURONTO SPL,Secundarabad,SC,13:10,1,Nizamuddin,NZM,10:40,2,1290,Bi Weekly,"THU,SUN",2,SCR,listed,"THU,SUN",alias,alias
+1,156,02286,SC DURONTO SPL,Nizamuddin,NZM,15:45,1,Secundarabad,SC,14:00,2,1335,Bi Weekly,"MON,FRI",2,SCR,pair,"MON,FRI",alias,alias
+1,157,02073,HWH BBS SPL,Howrah Jn,HWH,14:25,1,Bhubaneswar,BBS,21:20,1,415,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SER,listed,All Days,alias,alias
+1,158,02074,BBS HWH SPL,Bhubaneswar,BBS,06:00,1,Howrah Jn,HWH,12:40,1,400,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SER,pair,All Days,alias,alias
+1,159,02023,HWH PNBE SPL,Howrah Jn,HWH,14:45,1,Patna Jn,PNBE,23:25,1,520,"1,2,3,4,5,6","MON,TUE,WED,THU,FRI,SAT",6,ECR,listed,"MON,TUE,WED,THU,FRI,SAT",alias,alias
+1,160,02024,PNBE HWH SPL,Patna Jn,PNBE,05:30,1,Howrah Jn,HWH,13:25,1,475,"1,2,3,4,5,6","MON,TUE,WED,THU,FRI,SAT",6,ECR,pair,"MON,TUE,WED,THU,FRI,SAT",alias,alias
+1,161,02365,PNBE RNC SPL,Patna,PNBE,06:00,1,Ranchi,RNC,13:55,1,475,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,listed,All Days,alias,alias
+1,162,02366,RNC PNBE SPL,Ranchi,RNC,15:25,1,Patna,PNBE,23:20,1,475,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,pair,All Days,alias,alias
+1,163,02091,JAN SHATBDI SPL,Dehradun,DDN,15:45,1,Kathgodam,KGM,23:35,1,470,"2,3,5,6,7","TUE,WED,FRI,SAT,SUN",5,NER,listed,"TUE,WED,FRI,SAT,SUN",alias,alias
+1,164,02092,DOON JANSTB SPL,Kathgodam,KGM,05:30,1,Dehradun,DDN,12:30,1,420,"2,3,5,6,7","TUE,WED,FRI,SAT,SUN",5,NER,pair,"TUE,WED,FRI,SAT,SUN",alias,alias
+1,165,02067,GHY JTTN SPECIAL,Guwahati,GHY,06:30,1,Jorhat Town,JTTN,13:20,1,410,"1,2,3,4,5,6","MON,TUE,WED,THU,FRI,SAT",6,NFR,listed,"MON,TUE,WED,THU,FRI,SAT",alias,alias
+1,166,02068,JTTN GHY SPECIAL,Jorhat Town,JTTN,14:30,1,Guwahati,GHY,21:20,1,410,"1,2,3,4,5,6","MON,TUE,WED,THU,FRI,SAT",6,NFR,pair,"MON,TUE,WED,THU,FRI,SAT",alias,alias
+1,167,02053,JAN SHATBDI SPL,Haridwar,HW,14:45,1,Amritsar,ASR,22:05,1,440,"1,2,3,5,6,7","MON,TUE,WED,FRI,SAT,SUN",6,NR,listed,"MON,TUE,WED,FRI,SAT,SUN",alias,alias
+1,168,02054,ASR HW JAN SPL,Amritsar,ASR,06:50,1,Haridwar,HW,13:50,1,420,"1,2,3,5,6,7","MON,TUE,WED,FRI,SAT,SUN",6,NR,pair,"MON,TUE,WED,FRI,SAT,SUN",alias,alias
+1,169,02055,JAN SHATBDI SPL,New Delhi,NDLS,13:20,1,Dehradun,DDN,21:10,1,470,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NR,listed,All Days,alias,alias
+1,170,02056,JANSHATABDI SPL,Dehradun,DDN,05:00,1,New Delhi,NDLS,11:15,1,375,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NR,pair,All Days,alias,alias
+1,171,02057,UHL JANSTB SPL,New Delhi,NDLS,14:35,1,Una Himachal,UHL,22:10,1,455,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NR,listed,All Days,alias,alias
+1,172,02058,JAN SHATBDI SPL,Una Himachal,UHL,05:00,1,New Delhi,NDLS,12:00,1,420,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,NR,pair,All Days,alias,alias
+1,173,02065,DEE JAN SHT SPL,Ajmer,AII,05:40,1,Delhi Sarai Rohilla,DEE,11:35,1,355,"1,2,3,5,6","MON,TUE,WED,FRI,SAT",5,NWR,listed,"MON,TUE,WED,FRI,SAT",alias,alias
+1,174,02066,AII JAN SHTB SPL,Delhi Sarai Rohilla,DEE,16:15,1,Ajmer,AII,22:25,1,370,"1,2,3,5,6","MON,TUE,WED,FRI,SAT",5,NWR,pair,"MON,TUE,WED,FRI,SAT",alias,alias
+1,175,02069,RIG G SPL,Raigarh,RIG,06:20,1,Gondia,G,13:25,1,425,"1,2,3,4,5,6","MON,TUE,WED,THU,FRI,SAT",6,SECR,listed,"MON,TUE,WED,THU,FRI,SAT",alias,alias
+1,176,02070,G RIG SPL,Gondia,G,15:00,1,Raigarh,RIG,22:00,1,420,"1,2,3,4,5,6","MON,TUE,WED,THU,FRI,SAT",6,SECR,pair,"MON,TUE,WED,THU,FRI,SAT",alias,alias
+1,177,02021,HWH BBN SF SPL,Howrah,HWH,06:20,1,Barbil,BBN,13:05,1,405,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SER,listed,All Days,alias,alias
+1,178,02022,BBN HWH SF SPL,Barbil,BBN,13:40,1,Howrah,HWH,20:55,1,435,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SER,pair,All Days,alias,alias
+1,179,02075,JAN SHATABDI,Calicut,CLT,13:45,1,Trivendrum,TVC,21:35,1,470,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SR,listed,All Days,alias,alias
+1,180,02076,JAN SHATABDI,Trivendrum,TVC,05:55,1,Calicut,CLT,13:15,1,440,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SR,pair,All Days,alias,alias
+1,181,02081,JAN SHATABDI,Kannur,CAN,04:50,1,Trivendrum,TVC,14:25,1,575,"1,2,4,5,6","MON,TUE,THU,FRI,SAT",5,SR,listed,"MON,TUE,THU,FRI,SAT",alias,alias
+1,182,02082,JAN SHATABDI,Trivendrum,TVC,14:45,1,Kannur,CAN,00:20,2,575,"1,2,4,5,6","MON,TUE,THU,FRI,SAT",5,SR,pair,"MON,TUE,THU,FRI,SAT",alias,alias
+1,183,02079,JANSHATABDI EXP,Bengaluru,SBC,06:00,1,Hubli,UBL,13:45,1,465,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SWR,listed,All Days,alias,alias
+1,184,02080,JAN SHATABDI EXP,Hubli,UBL,14:20,1,Bengaluru,SBC,21:50,1,450,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SWR,pair,All Days,alias,alias
+1,185,02089,JANSHATABDI EXP,Yashwantpur,YPR,00:00,1,Shivamoga Town,SMET,21:55,1,1315,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SWR,listed,All Days,alias,alias
+1,186,02090,JANSHATABDI EXP,Shivamoga Town,SMET,05:30,1,Yashwantpur,YPR,09:50,1,260,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SWR,pair,All Days,alias,alias
+1,187,02059,NZM JAN SHATABDI,Kota,KOTA,05:55,1,Nizamuddin,NZM,12:30,1,395,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WCR,listed,All Days,alias,alias
+1,188,02060,JAN SHATBDI SPL,Nizamuddin,NZM,13:15,1,Kota,KOTA,20:00,1,405,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WCR,pair,All Days,alias,alias
+1,189,02061,JANSHATABDI SPL,Habibganj,HBJ,17:40,1,Jabalpur,JBP,22:55,1,315,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WCR,listed,All Days,alias,alias
+1,190,02062,JANSHATABDI SPL,Jabalpur,JBP,05:30,1,Habibganj,HBJ,11:00,1,330,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,WCR,pair,All Days,alias,alias
+1,191,09037,BDTS GKP SPL,Bandra(T),BDTS,22:40,1,Gorakhpur,GKP,13:45,3,2345,4 days,"TUE,WED,FRI,SUN",4,WR,listed,"TUS,WED,FRI,SUN",alias,alias
+1,192,09038,AVADH SPL,Gorakhpur,GKP,13:20,1,Bandra(T),BDTS,04:35,3,2355,4 days,"MON,WED,FRI,SAT",4,WR,pair,"MON,WED,FRI,SAT",alias,alias
+1,193,09039,BDTS MFP SPL,Bandra(T),BDTS,22:40,1,Muzaffarpur,MFP,21:50,3,2830,Tri Weekly,"MON,THU,SAT",3,WR,listed,"MON,THU,SAT",alias,alias
+1,194,09040,MFP BDTS SPECIAL,Muzaffarpur,MFP,06:00,1,Bandra(T),BDTS,04:35,3,2795,Tri Weekly,"TUE,THU,SUN",3,WR,pair,"TUE,THU,SUN",alias,alias
+1,195,02565,DBG NDLS SPL,Darbhanga,DBG,08:25,1,New Delhi,NDLS,05:30,2,1265,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,listed,All Days,alias,alias
+1,196,02566,BIHAR S K SPL,New Delhi,NDLS,14:15,1,Darbhanga,DBG,11:15,2,1260,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,ECR,pair,All Days,alias,alias
+1,197,02917,ADI NZM SPL,Ahmedabad,ADI,17:30,1,Nizamuddin,NZM,10:50,2,1040,Tri Weekly,"MON,WED,FRI",3,WR,listed,"MON,WED,FRI",alias,alias
+1,198,02918,GUJRAT S K SPL,Nizamuddin,NZM,13:55,1,Ahmedabad,ADI,06:05,2,970,Tri Weekly,"TUE,THU,SAT",3,WR,pair,"TUE,THU,SAT",alias,alias
+1,199,02779,GOA EXPRESS,Vasco da Gama,VSG,15:45,1,Nizamuddin,NZM,06:20,3,2315,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SWR,listed,All Days,alias,alias
+1,200,02780,GOA EXPRESS SPL,Nizamuddin,NZM,15:00,1,Vasco da Gama,VSG,05:40,3,2320,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,SWR,pair,All Days,alias,alias
+2,1,02301,HWH NDLS AC SPL,Howrah,HWH,17:05,1,New Delhi,NDLS,10:00,2,1015,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,2,02302,NDLS HWH SPL,New Delhi,NDLS,16:55,1,Howrah,HWH,10:05,2,1030,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,3,02951,MMCT NDLS SPL,Mumbai Central,BCT,17:30,1,New Delhi,NDLS,09:05,2,935,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,4,02952,NDLS MMCT SPL,New Delhi,NDLS,17:00,1,Mumbai Central,BCT,08:50,2,950,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,5,02957,NDLS RAJ SPL,Ahmedabad,ADI,18:40,1,New Delhi,NDLS,08:00,2,800,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,6,02958,RAJDHANI SPL,New Delhi,NDLS,20:25,1,Ahmedabad,ADI,10:10,2,825,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,7,02309,RJPB NDLS AC SPL,Rajendranagar (T),RJPB,19:20,1,New Delhi,NDLS,07:40,2,740,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,8,02310,NDLS RJPB SPL,New Delhi,NDLS,17:15,1,Rajendranagar (T),RJPB,05:30,3,2175,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,9,02691,SBC NDLS AC EXP,Bengaluru,SBC,20:30,1,New Delhi,NDLS,05:55,3,2005,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,10,02692,NDLS SBC SPL,New Delhi,NDLS,21:15,1,Bengaluru,SBC,06:40,3,2005,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,11,02423,NDLS DBRG SPL,Dibrugarh,DBRG,21:10,1,New Delhi,NDLS,10:10,3,2220,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,12,02424,DBRG NDLS AC SPL,New Delhi,NDLS,16:45,1,Dibrugarh,DBRG,07:00,3,2295,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,13,02442,NDLS BSP SPECIAL,New Delhi,NDLS,16:00,1,Bilaspur,BSP,12:00,2,1200,,"TUE,SAT",2,,none,"Tue, Sat Tue, Sat",alias,alias
+2,14,02441,BSP NDLS SPL,Bilaspur,BSP,14:40,1,New Delhi,NDLS,10:55,2,1215,,"MON,THU",2,,none,"Mon,Thu Mon,Thu",alias,alias
+2,15,02823,BBS NDLS SPL,Bhubaneswar,BBS,10:00,1,New Delhi,NDLS,10:45,2,1485,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,16,02824,NDLS BBS SPL,New Delhi,NDLS,17:05,1,Bhubaneswar,BBS,17:25,2,1460,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,17,02425,NDLS JAT SPL,New Delhi,NDLS,21:10,1,Jammu Tawi,JAT,05:45,2,515,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,18,02426,JAT NDLS SPL,Jammu Tawi,JAT,20:10,1,New Delhi,NDLS,05:00,2,530,Daily,"MON,TUE,WED,THU,FRI,SAT,SUN",7,,none,All Days,alias,alias
+2,19,02433,MAS NDLS EXP,Chennai,MAS,06:35,1,New Delhi,NDLS,10:30,2,1675,Bi Weekly,"WED,SAT",2,,none,Wed & Sat,alias,alias
+2,20,02434,NDLS MAS SPL,New Delhi,NDLS,16:00,1,Chennai,MAS,20:40,2,1720,Bi Weekly,"MON,THU",2,,none,Mon & Thu,alias,alias
+2,21,02453,RNC NDLS RAJ SPL,Ranchi,RNC,17:40,1,New Delhi,NDLS,10:55,2,1035,Bi Weekly,"THU,SUN",2,,none,Thu & Sun,alias,alias
+2,22,02454,NDLS RNC SPL,New Delhi,NDLS,15:30,1,Ranchi,RNC,10:00,2,1110,Bi Weekly,"WED,SAT",2,,none,Wed & Sat,alias,alias
+2,23,02437,SBC NDLS AC EXP,Secunderabad,SC,13:15,1,New Delhi,NDLS,10:40,2,1285,Weekly,WED,1,,none,Wed only.,alias,alias
+2,24,02438,NDLS SC SPL,New Delhi,NDLS,16:00,1,Secunderabad,SC,14:00,2,1320,Weekly,SUN,1,,none,Sun only.,alias,alias
+2,25,02431,TVC NDLS SPL,Thiruvananthapuram,TVC,19:45,1,New Delhi,NDLS,12:40,3,2455,Tri Weekly,"TUE,THU,FRI",3,,none,"Tue, Thu & Fri",alias,alias
+2,26,02432,NDLS TVC SPL,New Delhi,NDLS,11:25,1,Thiruvananthapuram,TVC,05:25,3,2520,Tri Weekly,"TUE,WED,SUN",3,,none,"Tue, Wed & Sun",alias,alias
+2,27,02501,AGTL NDLS AC SPL,Agartala,AGTL,19:00,1,New Delhi,NDLS,11:20,3,2420,Weekly,MON,1,,none,Mon only.,alias,alias
+2,28,02502,NDLS AGTL SPL,New Delhi,NDLS,19:50,1,Agartala,AGTL,13:30,3,2500,Weekly,WED,1,,none,Wed only,alias,alias

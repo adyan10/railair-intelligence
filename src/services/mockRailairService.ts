@@ -3,17 +3,11 @@
 // All data is simulated. No real APIs are called.
 // ============================================================
 import type { RailAirService } from './railairService';
-import type { KpiSummary, ScenarioResult } from '../types/railair';
-import { STATIONS, CORRIDOR_SEGMENTS, HOTSPOTS, TREND_DATA, DATA_QUALITY_ITEMS, INTERVENTION_SCENARIOS, BASELINE_SCENARIO } from '../data/mock';
+import type { KpiSummary, ScenarioResult, TrainServiceOption } from '../types/railair';
+import { STATIONS, CORRIDOR_SEGMENTS, HOTSPOTS, TREND_DATA, DATA_QUALITY_ITEMS, INTERVENTION_SCENARIOS, BASELINE_SCENARIO, BASELINE_METRICS } from '../data/mock';
 import { buildJourneyEstimate } from '../lib/exposure';
 import { calcScenarioResult } from '../lib/exposure';
-
-const BASELINE_METRICS = {
-  avgPm25: 135,
-  avgPm10: 233,
-  hotspotCount: HOTSPOTS.length,
-  coveragePercent: 28,
-};
+import { getEligibleTrains } from './timetableService';
 
 const KPI: KpiSummary = {
   avgPm25: 135,
@@ -39,18 +33,47 @@ export const mockRailairService: RailAirService = {
   getDataQuality: () => delay(DATA_QUALITY_ITEMS),
   getHotspots: () => delay(HOTSPOTS),
 
-  async getJourneyEstimate(originId, destinationId, durationMinutes, label) {
+  async getTimetableOptions(originId: string, destinationId: string): Promise<TrainServiceOption[]> {
+    const options = getEligibleTrains(originId, destinationId);
+    return delay(options);
+  },
+
+  async getJourneyEstimate(originId, destinationId, durationOrTrain, label) {
     const origin = STATIONS.find((s) => s.id === originId);
     const dest = STATIONS.find((s) => s.id === destinationId);
     if (!origin || !dest) throw new Error(`Unknown station(s): ${originId} / ${destinationId}`);
+
+    const eligibleTrains = getEligibleTrains(originId, destinationId);
+
+    let selectedTrain: TrainServiceOption | undefined;
+    let scheduledDuration = 0;
+    let scheduleUnavailable = false;
+
+    if (eligibleTrains.length > 0) {
+      if (typeof durationOrTrain === 'string') {
+        selectedTrain = eligibleTrains.find((t) => t.trainNo === durationOrTrain) ?? eligibleTrains[0];
+      } else if (typeof durationOrTrain === 'number') {
+        selectedTrain = eligibleTrains.find((t) => t.durationMinutes === durationOrTrain) ?? eligibleTrains[0];
+      } else {
+        selectedTrain = eligibleTrains[0];
+      }
+      scheduledDuration = selectedTrain.durationMinutes;
+    } else {
+      scheduleUnavailable = true;
+      scheduledDuration = 0;
+    }
+
+    const estimateLabel = label ?? `${origin.shortName} → ${dest.shortName}`;
     const estimate = buildJourneyEstimate(
-      `journey-${originId}-${destinationId}-${durationMinutes}`,
-      label,
+      `journey-${originId}-${destinationId}-${selectedTrain?.trainNo ?? 'none'}`,
+      estimateLabel,
       origin,
       dest,
       CORRIDOR_SEGMENTS,
       STATIONS,
-      durationMinutes
+      scheduledDuration,
+      selectedTrain,
+      scheduleUnavailable
     );
     return delay(estimate);
   },

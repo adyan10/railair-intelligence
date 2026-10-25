@@ -1,5 +1,12 @@
 import type { InterventionScenario } from '../../types/railair';
 
+export const BASELINE_METRICS = {
+  avgPm25: 135,
+  avgPm10: 233,
+  hotspotCount: 3,
+  coveragePercent: 28,
+};
+
 export const BASELINE_SCENARIO: InterventionScenario = {
   id: 'baseline',
   label: 'Baseline (No Intervention)',

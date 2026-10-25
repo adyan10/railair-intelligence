@@ -8,17 +8,17 @@
 // exposure measurement, or validated health-risk score.
 // ============================================================
 
-import type { Station, CorridorSegment, JourneySegmentEstimate, JourneyEstimate } from '../types/railair';
+import type { Station, CorridorSegment, JourneySegmentEstimate, JourneyEstimate, TrainServiceOption } from '../types/railair';
 
 const CALCULATION_NOTE =
-  'Exposure proxy = ?(segment concentration estimate ? segment travel time in hours). ' +
-  'Units: ?g?h/m?. This is a concentration-time proxy only ? not an inhaled dose, ' +
+  'Exposure proxy = Σ(segment concentration estimate × segment travel time in hours). ' +
+  'Units: µg·h/m³. This is a concentration-time proxy only — not an inhaled dose, ' +
   'personal exposure measurement, or validated health-risk score. ' +
-  'All inputs are simulated and carry low confidence.';
+  'Segment travel times are scaled to match the selected historical timetable schedule.';
 
 /**
  * Calculates a journey exposure proxy for a set of segments.
- * exposureProxy = concentration ? (travelTimeMinutes / 60)
+ * exposureProxy = concentration × (travelTimeMinutes / 60)
  */
 export function calcSegmentExposure(
   concentrationUgM3: number,
@@ -28,9 +28,9 @@ export function calcSegmentExposure(
 }
 
 /**
- * Builds a JourneyEstimate from origin ? destination using corridor segments.
+ * Builds a JourneyEstimate from origin → destination using corridor segments.
  * Segments are traversed in order. A duration scaling factor is applied if
- * the user-specified total duration differs from the sum of segment times.
+ * the scheduled total duration differs from the sum of nominal segment times.
  */
 export function buildJourneyEstimate(
   id: string,
@@ -39,7 +39,9 @@ export function buildJourneyEstimate(
   destinationStation: Station,
   segments: CorridorSegment[],
   allStations: Station[],
-  userDurationMinutes: number
+  scheduledDurationMinutes: number,
+  selectedTrain?: TrainServiceOption,
+  scheduleUnavailable?: boolean
 ): JourneyEstimate {
   const stationMap = new Map(allStations.map((s) => [s.id, s]));
 
@@ -54,7 +56,9 @@ export function buildJourneyEstimate(
     (sum, seg) => sum + seg.travelTimeMinutes,
     0
   );
-  const durationScale = naturalDuration > 0 ? userDurationMinutes / naturalDuration : 1;
+  const durationScale = naturalDuration > 0 && scheduledDurationMinutes > 0
+    ? scheduledDurationMinutes / naturalDuration
+    : (scheduledDurationMinutes === 0 ? 0 : 1);
 
   const journeySegments: JourneySegmentEstimate[] = relevantSegments.map((seg) => {
     const from = stationMap.get(seg.fromStationId);
@@ -86,11 +90,14 @@ export function buildJourneyEstimate(
     label,
     originStationId: originStation.id,
     destinationStationId: destinationStation.id,
-    totalDurationMinutes: userDurationMinutes,
+    totalDurationMinutes: scheduledDurationMinutes,
     segments: journeySegments,
     totalPm25ExposureProxy: totalPm25Proxy,
     totalPm10ExposureProxy: totalPm10Proxy,
     calculationNote: CALCULATION_NOTE,
+    selectedTrain,
+    isHistoricalSchedule: Boolean(selectedTrain),
+    scheduleUnavailable: scheduleUnavailable ?? (selectedTrain ? false : true),
   };
 }
 
@@ -155,7 +162,7 @@ export function findPathSegments(
   return [];
 }
 
-// ?? Scenario / Intervention Calculations ????????????????????????????????????
+// ── Scenario / Intervention Calculations ────────────────────────────────────
 
 export interface BaselineMetrics {
   avgPm25: number;
@@ -180,39 +187,69 @@ export interface AssumptionSet {
  * All outputs are hypothetical scenario projections for demonstration only.
  *
  * Coefficients (illustrative):
- *   locomotiveFuelReductionPct ? 0.3 effectiveness on PM2.5
- *   stationVentilationImprovementPct ? 0.5 effectiveness on station PM
- *   vegetationBarrierCoverPct ? 0.15 effectiveness
- *   lowEmissionZoneAdoptionPct ? 0.25 effectiveness
+ *   locomotiveFuelReductionPct → 0.30 effectiveness on PM2.5 emissions proxy
+ *   stationVentilationImprovementPct → 0.50 effectiveness on station PM proxy
+ *   vegetationBarrierCoverPct → 0.15 effectiveness on trackside dispersion
+ *   lowEmissionZoneAdoptionPct → 0.25 effectiveness on local station perimeter
  */
 export function calcScenarioResult(
   assumptions: AssumptionSet,
   baseline: BaselineMetrics
 ): { pm25: number; pm10: number; exposureReductionPct: number; coveragePct: number } {
+  // Safe baseline handling: guards against null, negative, NaN, non-finite
+  const basePm25 =
+    !baseline || typeof baseline.avgPm25 !== 'number' || !isFinite(baseline.avgPm25) || baseline.avgPm25 < 0
+      ? 0
+      : baseline.avgPm25;
+  const basePm10 =
+    !baseline || typeof baseline.avgPm10 !== 'number' || !isFinite(baseline.avgPm10) || baseline.avgPm10 < 0
+      ? 0
+      : baseline.avgPm10;
+  const baseCoverage =
+    !baseline || typeof baseline.coveragePercent !== 'number' || !isFinite(baseline.coveragePercent) || baseline.coveragePercent < 0
+      ? 0
+      : baseline.coveragePercent;
+
   const LOCO_EFF = 0.30;
   const VENT_EFF = 0.50;
   const VEG_EFF = 0.15;
   const LEZ_EFF = 0.25;
 
+  const loco = Math.max(0, Math.min(100, assumptions?.locomotiveFuelReductionPct ?? 0));
+  const vent = Math.max(0, Math.min(100, assumptions?.stationVentilationImprovementPct ?? 0));
+  const veg = Math.max(0, Math.min(100, assumptions?.vegetationBarrierCoverPct ?? 0));
+  const lez = Math.max(0, Math.min(100, assumptions?.lowEmissionZoneAdoptionPct ?? 0));
+
+  // Zero-intervention consistency rule: all zero assumptions must return exact baseline values
+  if (loco === 0 && vent === 0 && veg === 0 && lez === 0) {
+    return {
+      pm25: basePm25,
+      pm10: basePm10,
+      exposureReductionPct: 0,
+      coveragePct: baseCoverage,
+    };
+  }
+
   // Each intervention reduces a fraction of concentration by its effectiveness coefficient
   const totalReductionFactor =
-    (assumptions.locomotiveFuelReductionPct / 100) * LOCO_EFF +
-    (assumptions.stationVentilationImprovementPct / 100) * VENT_EFF +
-    (assumptions.vegetationBarrierCoverPct / 100) * VEG_EFF +
-    (assumptions.lowEmissionZoneAdoptionPct / 100) * LEZ_EFF;
+    (loco / 100) * LOCO_EFF +
+    (vent / 100) * VENT_EFF +
+    (veg / 100) * VEG_EFF +
+    (lez / 100) * LEZ_EFF;
 
-  // Cap reduction at 60% (cannot eliminate pollution via these hypothetical measures)
-  const cappedFactor = Math.min(totalReductionFactor, 0.60);
+  // Cap reduction at 60% (cannot eliminate ambient pollution via these hypothetical measures)
+  const cappedFactor = Math.min(Math.max(0, totalReductionFactor), 0.60);
 
-  const pm25 = baseline.avgPm25 * (1 - cappedFactor);
-  const pm10 = baseline.avgPm10 * (1 - cappedFactor);
+  const pm25 = basePm25 * (1 - cappedFactor);
+  const pm10 = basePm10 * (1 - cappedFactor);
   const exposureReductionPct = cappedFactor * 100;
 
-  // Coverage improves with monitoring-related interventions
+  // Coverage improves with monitoring-related interventions (percentage points)
   const coverageImprovementPct =
-    (assumptions.stationVentilationImprovementPct / 100) * 15 +
-    (assumptions.lowEmissionZoneAdoptionPct / 100) * 10;
-  const coveragePct = Math.min(baseline.coveragePercent + coverageImprovementPct * 100, 95);
+    (vent / 100) * 15 +
+    (lez / 100) * 10;
+  const coveragePct = Math.min(baseCoverage + coverageImprovementPct, 95);
 
   return { pm25, pm10, exposureReductionPct, coveragePct };
 }
+

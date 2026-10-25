@@ -136,7 +136,7 @@ describe('buildJourneyEstimate', () => {
     expect(estimate.segments[5].toStation.id).toBe('MRT');
   });
 
-  it('scales exposure proxy when user overrides travel duration', () => {
+  it('scales exposure proxy proportionally to scheduled travel duration', () => {
     const normal = buildJourneyEstimate(
       'normal',
       'MRT -> MMU',
@@ -157,6 +157,41 @@ describe('buildJourneyEstimate', () => {
     );
 
     expect(doubled.totalPm25ExposureProxy).toBeCloseTo(normal.totalPm25ExposureProxy * 2, 5);
+  });
+
+  it('correctly associates selectedTrain option and historical flags', () => {
+    const mockTrainOption = {
+      trainNo: '12018',
+      trainName: 'DEHRADUN SHTBDI',
+      originStationName: 'Dehradun',
+      destinationStationName: 'New Delhi',
+      departureTime: '07:05',
+      arrivalTime: '08:40',
+      departureDay: 1,
+      arrivalDay: 1,
+      durationMinutes: 95,
+      snapshot: '2017-12-22',
+      qualityFlag: 'verified',
+      intermediateStops: ['Ghaziabad'],
+      stopsCount: 3,
+      crossesMidnight: false,
+    };
+
+    const estimate = buildJourneyEstimate(
+      'journey-test',
+      'MRT -> NDLS',
+      mrt,
+      ndls,
+      CORRIDOR_SEGMENTS,
+      STATIONS,
+      95,
+      mockTrainOption
+    );
+
+    expect(estimate.selectedTrain).toBe(mockTrainOption);
+    expect(estimate.isHistoricalSchedule).toBe(true);
+    expect(estimate.scheduleUnavailable).toBe(false);
+    expect(estimate.totalDurationMinutes).toBe(95);
   });
 });
 
