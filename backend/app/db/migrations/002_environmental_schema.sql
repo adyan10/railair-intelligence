@@ -105,3 +105,26 @@ CREATE TABLE IF NOT EXISTS meteorological_observations (
 CREATE INDEX IF NOT EXISTS idx_met_obs_geom ON meteorological_observations USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_met_obs_var_time ON meteorological_observations(variable_name, observed_at);
 CREATE INDEX IF NOT EXISTS idx_met_obs_city ON meteorological_observations(city);
+
+-- 5. Environmental Ingestion Runs & Integrity Tracking
+-- Records deterministic ingestion runs, validation checks, and duplicate detection
+CREATE TABLE IF NOT EXISTS environmental_ingestion_runs (
+    id VARCHAR(100) PRIMARY KEY,                        -- e.g. 'run_zenodo_gridded_pm_v2_20261025'
+    dataset_id VARCHAR(50) NOT NULL REFERENCES environmental_datasets(id) ON DELETE RESTRICT,
+    source_filename VARCHAR(150) NOT NULL,
+    source_checksum_sha256 VARCHAR(64) NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    status VARCHAR(20) NOT NULL DEFAULT 'completed' CHECK (status IN ('in_progress', 'completed', 'failed')),
+    input_record_count INT NOT NULL DEFAULT 0,
+    ingested_record_count INT NOT NULL DEFAULT 0,
+    rejected_record_count INT NOT NULL DEFAULT 0,
+    duplicate_record_count INT NOT NULL DEFAULT 0,
+    code_version VARCHAR(50) NOT NULL DEFAULT '1.0',
+    validation_summary JSONB,
+    error_message TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ingestion_runs_dataset ON environmental_ingestion_runs(dataset_id);
+CREATE INDEX IF NOT EXISTS idx_ingestion_runs_status ON environmental_ingestion_runs(status);

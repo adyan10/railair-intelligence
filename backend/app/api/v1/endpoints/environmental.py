@@ -1,6 +1,13 @@
-from typing import Dict, Any, Optional
-from fastapi import APIRouter, Query, status
-from ....models.schemas import EnvironmentalInventoryResponse
+from typing import Dict, Any, Optional, List
+from fastapi import APIRouter, Query, HTTPException, status
+from ....models.schemas import (
+    EnvironmentalInventoryResponse,
+    EnvironmentalPeriodsResponse,
+    EnvironmentalGridResponse,
+    EnvironmentalTimeSeriesResponse,
+    EnvironmentalHotspotsResponse,
+    LocationInspectionResponse,
+)
 from ....services.environmental_service import environmental_service
 
 router = APIRouter()
@@ -215,3 +222,193 @@ async def query_observations(
             limit=limit,
             offset=offset,
         )
+
+
+# ==============================================================================
+# Environmental Explorer & Command Centre Specialized Endpoints
+# ==============================================================================
+
+@router.get(
+    "/variables",
+    summary="List Available Environmental Variables & Supported Units",
+    description="Returns metadata for environmental variables currently supported by the continuous regional gridded engine.",
+)
+async def get_variables() -> List[Dict[str, Any]]:
+    return [
+        {
+            "variable": "PM2.5",
+            "name": "Fine Particulate Matter (PM2.5)",
+            "unit": "µg/m³",
+            "source_dataset": "zenodo_gridded_pm_v2",
+            "source_type": "modelled_surface_estimate",
+            "temporal_coverage": "2017-01 to 2022-12 (72 months)",
+            "spatial_resolution": "10km",
+            "naaqs_annual_standard": 40.0,
+            "naaqs_24h_standard": 60.0,
+            "color_palette": "CPCB Standard (Green to Dark Maroon)",
+        },
+        {
+            "variable": "PM10",
+            "name": "Coarse Particulate Matter (PM10)",
+            "unit": "µg/m³",
+            "source_dataset": "zenodo_gridded_pm_v2",
+            "source_type": "modelled_surface_estimate",
+            "temporal_coverage": "2017-01 to 2022-12 (72 months)",
+            "spatial_resolution": "10km",
+            "naaqs_annual_standard": 60.0,
+            "naaqs_24h_standard": 100.0,
+            "color_palette": "CPCB Standard (Green to Dark Maroon)",
+        },
+    ]
+
+
+@router.get(
+    "/periods",
+    response_model=EnvironmentalPeriodsResponse,
+    summary="List Available Historical Time Periods",
+    description="Returns strictly real, verified historical monthly periods available in Zenodo Collection 2 (2017-01 to 2022-12).",
+)
+async def get_periods(
+    pollutant: str = Query("PM2.5", description="Pollutant: PM2.5 | PM10"),
+) -> EnvironmentalPeriodsResponse:
+    if pollutant.upper() not in ("PM2.5", "PM10"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported pollutant '{pollutant}'. Supported pollutants: PM2.5, PM10",
+        )
+    return environmental_service.get_available_periods(pollutant=pollutant)
+
+
+@router.get(
+    "/bounds",
+    summary="Get Spatial Footprint and Grid Resolution",
+    description="Returns geographic bounding box, coordinate reference system, and grid dimensions for the Delhi-NCR corridor.",
+)
+async def get_bounds() -> Dict[str, Any]:
+    return environmental_service.get_spatial_bounds()
+
+
+@router.get(
+    "/grid",
+    response_model=EnvironmentalGridResponse,
+    summary="Get Gridded Pollution Layer for Selected Period",
+    description="Delivers 64-cell contiguous 10 km grid with bounding polygons, values, and CPCB AQI classifications for map rendering.",
+)
+async def get_grid(
+    pollutant: str = Query("PM2.5", description="Pollutant: PM2.5 | PM10"),
+    year: int = Query(2022, ge=2017, le=2022, description="Year (2017–2022)"),
+    month: int = Query(12, ge=1, le=12, description="Month (1–12)"),
+) -> EnvironmentalGridResponse:
+    if pollutant.upper() not in ("PM2.5", "PM10"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported pollutant '{pollutant}'. Supported: PM2.5, PM10",
+        )
+    return environmental_service.get_grid_for_period(pollutant=pollutant, year=year, month=month)
+
+
+@router.get(
+    "/timeseries",
+    response_model=EnvironmentalTimeSeriesResponse,
+    summary="Get Multi-Year Time Series for Location or Grid Cell",
+    description="Returns 72-month chronological time series (2017–2022) with winter peaks and monsoon dips.",
+)
+async def get_timeseries(
+    grid_id: Optional[str] = Query(None, description="Grid Cell ID (e.g. grid_28.67_77.24)"),
+    lat: Optional[float] = Query(None, description="WGS84 Latitude"),
+    lon: Optional[float] = Query(None, description="WGS84 Longitude"),
+    pollutant: str = Query("PM2.5", description="Pollutant: PM2.5 | PM10"),
+) -> EnvironmentalTimeSeriesResponse:
+    return environmental_service.get_timeseries(grid_id=grid_id, lat=lat, lon=lon, pollutant=pollutant)
+
+
+@router.get(
+    "/summary",
+    summary="Get Regional Summary Statistics for Period",
+    description="Returns mean, median, min, max, standard deviation, and coverage indicators for the selected period.",
+)
+async def get_regional_summary(
+    pollutant: str = Query("PM2.5", description="Pollutant: PM2.5 | PM10"),
+    year: int = Query(2022, ge=2017, le=2022, description="Year (2017–2022)"),
+    month: int = Query(12, ge=1, le=12, description="Month (1–12)"),
+) -> Dict[str, Any]:
+    grid_resp = environmental_service.get_grid_for_period(pollutant=pollutant, year=year, month=month)
+    return {
+        "dataset_id": grid_resp.dataset_id,
+        "pollutant": grid_resp.pollutant,
+        "unit": grid_resp.unit,
+        "year": grid_resp.year,
+        "month": grid_resp.month,
+        "period": grid_resp.period,
+        "summary": grid_resp.summary.model_dump(),
+    }
+
+
+@router.get(
+    "/hotspots",
+    response_model=EnvironmentalHotspotsResponse,
+    summary="Get Ranked Pollution Hotspots for Period",
+    description="Returns top regional grid cells ranked by pollutant concentration descending.",
+)
+async def get_hotspots(
+    pollutant: str = Query("PM2.5", description="Pollutant: PM2.5 | PM10"),
+    year: int = Query(2022, ge=2017, le=2022, description="Year (2017–2022)"),
+    month: int = Query(12, ge=1, le=12, description="Month (1–12)"),
+    limit: int = Query(10, ge=1, le=64, description="Top N hotspots to return"),
+) -> EnvironmentalHotspotsResponse:
+    return environmental_service.get_hotspot_ranking(pollutant=pollutant, year=year, month=month, limit=limit)
+
+
+@router.get(
+    "/inspect",
+    response_model=LocationInspectionResponse,
+    summary="Inspect Environmental Layer at Clicked Coordinate",
+    description="Returns cell values, quality, nearest railway station, and historical time series for any coordinate inside the coverage area.",
+)
+async def inspect_location(
+    lat: float = Query(..., ge=28.0, le=30.0, description="Latitude"),
+    lon: float = Query(..., ge=76.5, le=78.5, description="Longitude"),
+    pollutant: str = Query("PM2.5", description="Pollutant: PM2.5 | PM10"),
+    year: int = Query(2022, ge=2017, le=2022, description="Year (2017–2022)"),
+    month: int = Query(12, ge=1, le=12, description="Month (1–12)"),
+) -> LocationInspectionResponse:
+    try:
+        return environmental_service.inspect_location(
+            lat=lat,
+            lon=lon,
+            pollutant=pollutant,
+            year=year,
+            month=month,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.get(
+    "/corridor-comparison",
+    summary="Compare Regional Grid Against 7 Canonical Railway Stations",
+    description="Compares regional ambient grid values against the 7 canonical corridor stations (MRT, MMU, MNR, GZB, SAH, DSO, NDLS).",
+)
+async def get_corridor_comparison(
+    pollutant: str = Query("PM2.5", description="Pollutant: PM2.5 | PM10"),
+    year: int = Query(2022, ge=2017, le=2022, description="Year (2017–2022)"),
+    month: int = Query(12, ge=1, le=12, description="Month (1–12)"),
+) -> List[Dict[str, Any]]:
+    return environmental_service.get_corridor_comparison(pollutant=pollutant, year=year, month=month)
+
+
+@router.get(
+    "/coverage",
+    summary="Get Environmental Ingestion & Spatial Coverage Status",
+    description="Returns data coverage indicators, missing data counts, and provenance information.",
+)
+async def get_coverage_status() -> Dict[str, Any]:
+    summary = environmental_service.run_ingestion_summary()
+    return {
+        "status": "healthy",
+        "primary_dataset": "zenodo_gridded_pm_v2",
+        "spatial_footprint": "Meerut–Ghaziabad–Delhi (28.45°N–29.20°N, 77.10°E–77.90°E)",
+        "temporal_range": "2017-01 to 2022-12 (72 monthly periods)",
+        "resolution": "10km (64 continuous cells)",
+        "metrics": summary,
+    }

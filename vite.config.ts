@@ -7,4 +7,12 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['maplibre-gl', '@maplibre/maplibre-gl-leaflet'],
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
+  },
 })

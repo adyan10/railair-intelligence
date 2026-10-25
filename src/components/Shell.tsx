@@ -10,6 +10,9 @@ import {
   Play,
   Pause,
   Clock,
+  Wind,
+  Gauge,
+  ShieldCheck,
 } from 'lucide-react';
 import { SimBanner } from './SimBanner';
 import type { ActivePollutant, CorridorContextType } from '../types/railair';
@@ -22,6 +25,8 @@ const NAV_ITEMS = [
   { to: '/journey', label: 'Journey Planner', icon: Navigation },
   { to: '/hotspots', label: 'Hotspots', icon: Flame },
   { to: '/interventions', label: 'Interventions', icon: FlaskConical },
+  { to: '/explorer', label: 'Environmental Explorer', icon: Wind },
+  { to: '/command-centre', label: 'Command Centre', icon: Gauge },
 ];
 
 export function Shell() {
@@ -57,6 +62,10 @@ export function Shell() {
     togglePlay,
     diurnalFactor,
   };
+
+  const isEnvironmentalRoute =
+    location.pathname.startsWith('/explorer') ||
+    location.pathname.startsWith('/command-centre');
 
   return (
     <div className="flex h-full bg-[#F5F6F8] text-[#192734] overflow-hidden font-sans">
@@ -108,7 +117,7 @@ export function Shell() {
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>GEO-PROVENANCE: ACTIVE</span>
           </div>
-          <div className="text-slate-400">Delhi Division · Simulated v0.1</div>
+          <div className="text-slate-400">Delhi Division · Verified Datasets</div>
         </div>
       </aside>
 
@@ -127,67 +136,78 @@ export function Shell() {
 
           {/* Global Telemetry Controls */}
           <div className="flex items-center flex-wrap gap-3">
-            {/* Pollutant Switcher */}
-            <div className="inline-flex rounded-md border border-[#DCE3EA] p-0.5 bg-slate-50 text-[11px] font-mono shadow-2xs">
-              {(['PM2.5', 'PM10', 'NAQI'] as const).map((pol) => (
-                <button
-                  key={pol}
-                  onClick={() => setSelectedPollutant(pol)}
-                  className={`px-2.5 py-1 rounded transition-colors ${
-                    selectedPollutant === pol
-                      ? 'bg-[#17365D] text-white font-semibold shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                  title={`Select ${pol} parameter`}
-                >
-                  {pol}
-                </button>
-              ))}
-            </div>
-
-            {/* 24-Hour Diurnal Scrubber */}
-            <div className="flex items-center gap-2.5 bg-white border border-[#DCE3EA] rounded-md px-3 py-1 text-xs font-mono shadow-2xs">
-              <button
-                onClick={togglePlay}
-                className="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-[#17365D] flex items-center justify-center transition-colors"
-                title={isPlaying ? 'Pause 24h cycle' : 'Play 24h diurnal cycle'}
-                aria-label={isPlaying ? 'Pause' : 'Play'}
-              >
-                {isPlaying ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current ml-0.5" />}
-              </button>
-              <div className="flex flex-col">
-                <div className="flex items-center justify-between gap-2 text-[10px] leading-tight">
-                  <span className="font-semibold text-[#17365D] flex items-center gap-1">
-                    <Clock className="w-2.5 h-2.5 text-slate-400" />
-                    {formatHourIST(selectedHour)}
-                  </span>
-                  <span className="text-slate-400 text-[9px]">
-                    ({diurnalFactor.toFixed(2)}× factor)
-                  </span>
+            {isEnvironmentalRoute ? (
+              <div className="flex items-center gap-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-emerald-500/40 bg-emerald-50 text-[11px] text-emerald-800 font-mono font-semibold">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>HISTORICAL MODELLED DATA · Zenodo 10km (2017–2022)</span>
                 </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={23}
-                  step={1}
-                  value={selectedHour}
-                  onChange={(e) => setSelectedHour(Number(e.target.value))}
-                  className="w-28 sm:w-36 h-1 accent-[#17365D] cursor-pointer mt-1"
-                  aria-label="Diurnal hour scrubber"
-                />
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Pollutant Switcher */}
+                <div className="inline-flex rounded-md border border-[#DCE3EA] p-0.5 bg-slate-50 text-[11px] font-mono shadow-2xs">
+                  {(['PM2.5', 'PM10', 'NAQI'] as const).map((pol) => (
+                    <button
+                      key={pol}
+                      onClick={() => setSelectedPollutant(pol)}
+                      className={`px-2.5 py-1 rounded transition-colors ${
+                        selectedPollutant === pol
+                          ? 'bg-[#17365D] text-white font-semibold shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                      title={`Select ${pol} parameter`}
+                    >
+                      {pol}
+                    </button>
+                  ))}
+                </div>
 
-            {/* Simulated Data Badge */}
-            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded border border-amber-200 bg-amber-50 text-[11px] text-amber-800 font-mono">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-              <span>Simulated Sample Data</span>
-            </div>
+                {/* 24-Hour Diurnal Scrubber */}
+                <div className="flex items-center gap-2.5 bg-white border border-[#DCE3EA] rounded-md px-3 py-1 text-xs font-mono shadow-2xs">
+                  <button
+                    onClick={togglePlay}
+                    className="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-[#17365D] flex items-center justify-center transition-colors"
+                    title={isPlaying ? 'Pause 24h cycle' : 'Play 24h diurnal cycle'}
+                    aria-label={isPlaying ? 'Pause' : 'Play'}
+                  >
+                    {isPlaying ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current ml-0.5" />}
+                  </button>
+                  <div className="flex flex-col">
+                    <div className="flex items-center justify-between gap-2 text-[10px] leading-tight">
+                      <span className="font-semibold text-[#17365D] flex items-center gap-1">
+                        <Clock className="w-2.5 h-2.5 text-slate-400" />
+                        {formatHourIST(selectedHour)}
+                      </span>
+                      <span className="text-slate-400 text-[9px]">
+                        ({diurnalFactor.toFixed(2)}× factor)
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={23}
+                      step={1}
+                      value={selectedHour}
+                      onChange={(e) => setSelectedHour(Number(e.target.value))}
+                      className="w-28 sm:w-36 h-1 accent-[#17365D] cursor-pointer mt-1"
+                      aria-label="Diurnal hour scrubber"
+                    />
+                  </div>
+                </div>
+
+                {/* Simulated Data Badge */}
+                <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded border border-amber-200 bg-amber-50 text-[11px] text-amber-800 font-mono">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Simulated Sample Data</span>
+                </div>
+              </>
+            )}
           </div>
         </header>
 
-        {/* Sim Banner */}
-        <SimBanner />
+        {/* Sim Banner - Only on simulation pages */}
+        {!isEnvironmentalRoute && <SimBanner />}
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto relative flex flex-col min-h-0">

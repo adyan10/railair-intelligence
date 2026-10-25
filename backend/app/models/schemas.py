@@ -203,3 +203,159 @@ class EnvironmentalInventoryResponse(BaseModel):
     datasets: List[EnvironmentalDatasetInfo]
     total_datasets: int
     environment_provider: str = Field(default="hybrid_in_memory_postgis")
+
+
+# ==============================================================================
+# Environmental Explorer & Command Centre API Schemas
+# ==============================================================================
+
+class EnvironmentalPeriod(BaseModel):
+    period: str = Field(..., description="Format: YYYY-MM")
+    year: int = Field(..., ge=2000, le=2100)
+    month: int = Field(..., ge=1, le=12)
+    label: str = Field(..., description="Human readable label, e.g. 'Jan 2017'")
+    timestamp: str = Field(..., description="ISO 8601 normalized timestamp")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class EnvironmentalPeriodsResponse(BaseModel):
+    dataset_id: str
+    pollutant: str
+    total_periods: int
+    periods: List[EnvironmentalPeriod]
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class GridCellBounds(BaseModel):
+    south: float
+    west: float
+    north: float
+    east: float
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class GridCellRecord(BaseModel):
+    grid_id: str
+    latitude: float
+    longitude: float
+    bounds: GridCellBounds
+    value: Optional[float]
+    unit: str = "µg/m³"
+    category: str
+    color: str
+    nearest_station: Optional[str] = None
+    distance_to_station_km: Optional[float] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class RegionalSummary(BaseModel):
+    mean: float
+    median: float
+    min: float
+    max: float
+    std_dev: float
+    valid_cells: int
+    total_cells: int
+    no_data_cells: int
+    coverage_pct: float
+    unit: str = "µg/m³"
+    cpcb_dominant_category: str
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class EnvironmentalGridResponse(BaseModel):
+    dataset_id: str
+    pollutant: str
+    unit: str
+    year: int
+    month: int
+    period: str
+    total_cells: int
+    summary: RegionalSummary
+    cells: List[GridCellRecord]
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class TimeSeriesPoint(BaseModel):
+    period: str
+    year: int
+    month: int
+    value: Optional[float]
+    unit: str
+    category: str
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class EnvironmentalTimeSeriesResponse(BaseModel):
+    dataset_id: str
+    pollutant: str
+    unit: str
+    grid_id: str
+    latitude: float
+    longitude: float
+    total_points: int
+    timeseries: List[TimeSeriesPoint]
+    overall_mean: float
+    overall_min: float
+    overall_max: float
+    winter_peak_mean: float
+    monsoon_dip_mean: float
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class HotspotRankItem(BaseModel):
+    rank: int
+    grid_id: str
+    latitude: float
+    longitude: float
+    value: float
+    unit: str
+    category: str
+    color: str
+    nearest_canonical_station_id: Optional[str]
+    distance_to_canonical_km: Optional[float]
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class EnvironmentalHotspotsResponse(BaseModel):
+    dataset_id: str
+    pollutant: str
+    unit: str
+    year: int
+    month: int
+    period: str
+    total_hotspots: int
+    items: List[HotspotRankItem]
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class LocationInspectionResponse(BaseModel):
+    dataset_id: str
+    pollutant: str
+    unit: str
+    period: str
+    query_latitude: float
+    query_longitude: float
+    grid_id: str
+    cell_latitude: float
+    cell_longitude: float
+    cell_bounds: GridCellBounds
+    value: Optional[float]
+    category: str
+    color: str
+    distance_to_query_km: float
+    nearest_station: Optional[str]
+    distance_to_station_km: Optional[float]
+    timeseries: List[TimeSeriesPoint]
+
+    model_config = ConfigDict(populate_by_name=True)

@@ -24,6 +24,17 @@ from ..models.schemas import (
     GroundStationReading,
     GriddedCorridorEstimate,
     MeteorologicalReading,
+    EnvironmentalPeriod,
+    EnvironmentalPeriodsResponse,
+    GridCellBounds,
+    GridCellRecord,
+    RegionalSummary,
+    EnvironmentalGridResponse,
+    TimeSeriesPoint,
+    EnvironmentalTimeSeriesResponse,
+    HotspotRankItem,
+    EnvironmentalHotspotsResponse,
+    LocationInspectionResponse,
 )
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent.parent.parent
@@ -72,6 +83,41 @@ def compute_sha256(path: Path) -> str:
         while chunk := f.read(65536):
             h.update(chunk)
     return h.hexdigest()
+
+
+def classify_aqi_category(pollutant: str, value: Optional[float]) -> Tuple[str, str]:
+    """Returns (category_name, hex_color) aligned with Indian CPCB AQI standards."""
+    if value is None:
+        return "No Data", "#94A3B8"
+    p = pollutant.upper()
+    if p == "PM2.5":
+        if value <= 30.0:
+            return "Good", "#10B981"
+        elif value <= 60.0:
+            return "Satisfactory", "#84CC16"
+        elif value <= 90.0:
+            return "Moderate", "#EAB308"
+        elif value <= 120.0:
+            return "Poor", "#F97316"
+        elif value <= 250.0:
+            return "Very Poor", "#EF4444"
+        else:
+            return "Severe", "#7F1D1D"
+    elif p == "PM10":
+        if value <= 50.0:
+            return "Good", "#10B981"
+        elif value <= 100.0:
+            return "Satisfactory", "#84CC16"
+        elif value <= 250.0:
+            return "Moderate", "#EAB308"
+        elif value <= 350.0:
+            return "Poor", "#F97316"
+        elif value <= 430.0:
+            return "Very Poor", "#EF4444"
+        else:
+            return "Severe", "#7F1D1D"
+    else:
+        return "Standard", "#64748B"
 
 
 class EnvironmentalService:
@@ -620,6 +666,390 @@ class EnvironmentalService:
                 "years_covered": sorted(list(set(r.year for r in met_recs))),
             },
         }
+
+    # ==========================================================================
+    # 6. Environmental Explorer & Command Centre Specialized Engines
+    # ==========================================================================
+    def get_available_periods(self, pollutant: str = "PM2.5") -> EnvironmentalPeriodsResponse:
+        """Returns ordered list of real, historical monthly time slices in Zenodo Collection 2."""
+        p_upper = pollutant.strip().upper()
+        if p_upper not in ("PM2.5", "PM10"):
+            p_upper = "PM2.5"
+
+        all_est = self._load_gridded_estimates()
+        slices = sorted(list(set((e.year, e.month) for e in all_est if e.pollutant == p_upper)))
+
+        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        periods: List[EnvironmentalPeriod] = []
+        for y, m in slices:
+            p_str = f"{y}-{m:02d}"
+            label = f"{month_names[m - 1]} {y}"
+            ts = f"{y}-{m:02d}-01T00:00:00Z"
+            periods.append(EnvironmentalPeriod(period=p_str, year=y, month=m, label=label, timestamp=ts))
+
+        return EnvironmentalPeriodsResponse(
+            dataset_id="zenodo_gridded_pm_v2",
+            pollutant=p_upper,
+            total_periods=len(periods),
+            periods=periods,
+        )
+
+    def get_spatial_bounds(self) -> Dict[str, Any]:
+        """Returns exact spatial bounding box and grid specification for Delhi-NCR corridor."""
+        return {
+            "dataset_id": "zenodo_gridded_pm_v2",
+            "crs": "EPSG:4326 (WGS84)",
+            "bounds": {
+                "min_lat": 28.45,
+                "max_lat": 29.20,
+                "min_lon": 77.10,
+                "max_lon": 77.90,
+            },
+            "grid_shape": {
+                "lat_count": 8,
+                "lon_count": 8,
+                "total_cells": 64,
+            },
+            "spatial_resolution": "10km",
+            "temporal_coverage": {
+                "start": "2017-01",
+                "end": "2022-12",
+                "total_months": 72,
+            },
+            "canonical_corridor": {
+                "stations": ["MRT", "MMU", "MNR", "GZB", "SAH", "DSO", "NDLS"],
+                "route_length_km": 83.0,
+            },
+        }
+
+    def get_grid_for_period(
+        self,
+        pollutant: str = "PM2.5",
+        year: int = 2022,
+        month: int = 12,
+    ) -> EnvironmentalGridResponse:
+        """Returns 64-cell contiguous 10 km grid with bounding polygons and AQI color scale."""
+        p_upper = pollutant.strip().upper()
+        if p_upper not in ("PM2.5", "PM10"):
+            p_upper = "PM2.5"
+
+        all_est = self._load_gridded_estimates()
+        matching = [e for e in all_est if e.pollutant == p_upper and e.year == year and e.month == month]
+
+        if not matching:
+            year, month = 2022, 12
+            matching = [e for e in all_est if e.pollutant == p_upper and e.year == year and e.month == month]
+
+        HALF_LAT = 0.05015
+        HALF_LON = 0.050125
+
+        cells: List[GridCellRecord] = []
+        values: List[float] = []
+
+        for e in matching:
+            val = e.value
+            cat, col = classify_aqi_category(p_upper, val)
+            if val is not None:
+                values.append(val)
+
+            nearest_st: Optional[str] = None
+            min_dist: Optional[float] = None
+            for st in CANONICAL_STATIONS:
+                d = haversine_distance_km(e.latitude, e.longitude, st["lat"], st["lng"])
+                if min_dist is None or d < min_dist:
+                    min_dist = round(d, 2)
+                    nearest_st = st["id"]
+
+            bounds = GridCellBounds(
+                south=round(e.latitude - HALF_LAT, 6),
+                west=round(e.longitude - HALF_LON, 6),
+                north=round(e.latitude + HALF_LAT, 6),
+                east=round(e.longitude + HALF_LON, 6),
+            )
+
+            cells.append(
+                GridCellRecord(
+                    grid_id=e.grid_id,
+                    latitude=e.latitude,
+                    longitude=e.longitude,
+                    bounds=bounds,
+                    value=val,
+                    unit=e.unit,
+                    category=cat,
+                    color=col,
+                    nearest_station=nearest_st,
+                    distance_to_station_km=min_dist,
+                )
+            )
+
+        valid_cells = len(values)
+        total_cells = len(cells)
+        no_data_cells = total_cells - valid_cells
+
+        if valid_cells > 0:
+            mean_val = round(sum(values) / valid_cells, 2)
+            sorted_vals = sorted(values)
+            median_val = round(
+                (sorted_vals[valid_cells // 2] if valid_cells % 2 != 0 else (sorted_vals[valid_cells // 2 - 1] + sorted_vals[valid_cells // 2]) / 2),
+                2,
+            )
+            min_val = round(min(values), 2)
+            max_val = round(max(values), 2)
+            variance = sum((x - mean_val) ** 2 for x in values) / valid_cells
+            std_dev = round(math.sqrt(variance), 2)
+            dom_cat, _ = classify_aqi_category(p_upper, mean_val)
+        else:
+            mean_val, median_val, min_val, max_val, std_dev = 0.0, 0.0, 0.0, 0.0, 0.0
+            dom_cat = "No Data"
+
+        summary = RegionalSummary(
+            mean=mean_val,
+            median=median_val,
+            min=min_val,
+            max=max_val,
+            std_dev=std_dev,
+            valid_cells=valid_cells,
+            total_cells=total_cells,
+            no_data_cells=no_data_cells,
+            coverage_pct=round((valid_cells / max(1, total_cells)) * 100.0, 1),
+            unit="µg/m³",
+            cpcb_dominant_category=dom_cat,
+        )
+
+        return EnvironmentalGridResponse(
+            dataset_id="zenodo_gridded_pm_v2",
+            pollutant=p_upper,
+            unit="µg/m³",
+            year=year,
+            month=month,
+            period=f"{year}-{month:02d}",
+            total_cells=total_cells,
+            summary=summary,
+            cells=cells,
+        )
+
+    def get_timeseries(
+        self,
+        grid_id: Optional[str] = None,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None,
+        pollutant: str = "PM2.5",
+    ) -> EnvironmentalTimeSeriesResponse:
+        """Returns 72-month multi-year time series for a grid cell or coordinate."""
+        p_upper = pollutant.strip().upper()
+        if p_upper not in ("PM2.5", "PM10"):
+            p_upper = "PM2.5"
+
+        all_est = self._load_gridded_estimates()
+        matching_cells = [e for e in all_est if e.pollutant == p_upper]
+
+        target_grid_id = grid_id
+        target_lat = lat
+        target_lon = lon
+
+        if target_grid_id is None:
+            if target_lat is not None and target_lon is not None:
+                best_cell = None
+                best_dist = None
+                for e in matching_cells:
+                    d = haversine_distance_km(target_lat, target_lon, e.latitude, e.longitude)
+                    if best_dist is None or d < best_dist:
+                        best_dist = d
+                        best_cell = e
+                if best_cell:
+                    target_grid_id = best_cell.grid_id
+                    target_lat = best_cell.latitude
+                    target_lon = best_cell.longitude
+            else:
+                target_grid_id = "grid_28.67_77.24"
+
+        cell_records = [e for e in matching_cells if e.grid_id == target_grid_id]
+        cell_records.sort(key=lambda x: (x.year, x.month))
+
+        if not cell_records and matching_cells:
+            target_grid_id = matching_cells[0].grid_id
+            cell_records = [e for e in matching_cells if e.grid_id == target_grid_id]
+            cell_records.sort(key=lambda x: (x.year, x.month))
+
+        if cell_records:
+            target_lat = cell_records[0].latitude
+            target_lon = cell_records[0].longitude
+
+        points: List[TimeSeriesPoint] = []
+        vals: List[float] = []
+        winter_vals: List[float] = []
+        monsoon_vals: List[float] = []
+
+        for e in cell_records:
+            cat, _ = classify_aqi_category(p_upper, e.value)
+            points.append(
+                TimeSeriesPoint(
+                    period=f"{e.year}-{e.month:02d}",
+                    year=e.year,
+                    month=e.month,
+                    value=e.value,
+                    unit=e.unit,
+                    category=cat,
+                )
+            )
+            if e.value is not None:
+                vals.append(e.value)
+                if e.month in (11, 12, 1):
+                    winter_vals.append(e.value)
+                elif e.month in (7, 8, 9):
+                    monsoon_vals.append(e.value)
+
+        mean_val = round(sum(vals) / len(vals), 2) if vals else 0.0
+        min_val = round(min(vals), 2) if vals else 0.0
+        max_val = round(max(vals), 2) if vals else 0.0
+        winter_mean = round(sum(winter_vals) / len(winter_vals), 2) if winter_vals else mean_val
+        monsoon_mean = round(sum(monsoon_vals) / len(monsoon_vals), 2) if monsoon_vals else mean_val
+
+        return EnvironmentalTimeSeriesResponse(
+            dataset_id="zenodo_gridded_pm_v2",
+            pollutant=p_upper,
+            unit="µg/m³",
+            grid_id=target_grid_id or "unknown",
+            latitude=target_lat or 28.6676,
+            longitude=target_lon or 77.2431,
+            total_points=len(points),
+            timeseries=points,
+            overall_mean=mean_val,
+            overall_min=min_val,
+            overall_max=max_val,
+            winter_peak_mean=winter_mean,
+            monsoon_dip_mean=monsoon_mean,
+        )
+
+    def get_hotspot_ranking(
+        self,
+        pollutant: str = "PM2.5",
+        year: int = 2022,
+        month: int = 12,
+        limit: int = 10,
+    ) -> EnvironmentalHotspotsResponse:
+        """Ranks grid cells by pollutant concentration descending for active period."""
+        p_upper = pollutant.strip().upper()
+        if p_upper not in ("PM2.5", "PM10"):
+            p_upper = "PM2.5"
+
+        grid_resp = self.get_grid_for_period(pollutant=p_upper, year=year, month=month)
+        sorted_cells = sorted([c for c in grid_resp.cells if c.value is not None], key=lambda x: (x.value or 0.0), reverse=True)
+
+        items: List[HotspotRankItem] = []
+        for idx, c in enumerate(sorted_cells[:limit], start=1):
+            items.append(
+                HotspotRankItem(
+                    rank=idx,
+                    grid_id=c.grid_id,
+                    latitude=c.latitude,
+                    longitude=c.longitude,
+                    value=c.value or 0.0,
+                    unit=c.unit,
+                    category=c.category,
+                    color=c.color,
+                    nearest_canonical_station_id=c.nearest_station,
+                    distance_to_canonical_km=c.distance_to_station_km,
+                )
+            )
+
+        return EnvironmentalHotspotsResponse(
+            dataset_id="zenodo_gridded_pm_v2",
+            pollutant=p_upper,
+            unit="µg/m³",
+            year=grid_resp.year,
+            month=grid_resp.month,
+            period=grid_resp.period,
+            total_hotspots=len(items),
+            items=items,
+        )
+
+    def inspect_location(
+        self,
+        lat: float,
+        lon: float,
+        pollutant: str = "PM2.5",
+        year: int = 2022,
+        month: int = 12,
+    ) -> LocationInspectionResponse:
+        """Inspects environmental values and historical series for a clicked map coordinate."""
+        p_upper = pollutant.strip().upper()
+        if p_upper not in ("PM2.5", "PM10"):
+            p_upper = "PM2.5"
+
+        grid_resp = self.get_grid_for_period(pollutant=p_upper, year=year, month=month)
+
+        best_cell: Optional[GridCellRecord] = None
+        best_dist: Optional[float] = None
+        for c in grid_resp.cells:
+            d = haversine_distance_km(lat, lon, c.latitude, c.longitude)
+            if best_dist is None or d < best_dist:
+                best_dist = round(d, 2)
+                best_cell = c
+
+        if not best_cell:
+            raise ValueError("No grid cells available for inspection")
+
+        ts_resp = self.get_timeseries(grid_id=best_cell.grid_id, pollutant=p_upper)
+
+        return LocationInspectionResponse(
+            dataset_id="zenodo_gridded_pm_v2",
+            pollutant=p_upper,
+            unit="µg/m³",
+            period=grid_resp.period,
+            query_latitude=round(lat, 6),
+            query_longitude=round(lon, 6),
+            grid_id=best_cell.grid_id,
+            cell_latitude=best_cell.latitude,
+            cell_longitude=best_cell.longitude,
+            cell_bounds=best_cell.bounds,
+            value=best_cell.value,
+            category=best_cell.category,
+            color=best_cell.color,
+            distance_to_query_km=best_dist or 0.0,
+            nearest_station=best_cell.nearest_station,
+            distance_to_station_km=best_cell.distance_to_station_km,
+            timeseries=ts_resp.timeseries,
+        )
+
+    def get_corridor_comparison(
+        self,
+        pollutant: str = "PM2.5",
+        year: int = 2022,
+        month: int = 12,
+    ) -> List[Dict[str, Any]]:
+        """Compares regional ambient grid concentration at each canonical railway station."""
+        p_upper = pollutant.strip().upper()
+        if p_upper not in ("PM2.5", "PM10"):
+            p_upper = "PM2.5"
+
+        grid_resp = self.get_grid_for_period(pollutant=p_upper, year=year, month=month)
+
+        station_comparisons = []
+        for st in CANONICAL_STATIONS:
+            best_cell = None
+            best_dist = None
+            for c in grid_resp.cells:
+                d = haversine_distance_km(st["lat"], st["lng"], c.latitude, c.longitude)
+                if best_dist is None or d < best_dist:
+                    best_dist = round(d, 2)
+                    best_cell = c
+
+            station_comparisons.append({
+                "station_id": st["id"],
+                "station_name": st["name"],
+                "city": st["city"],
+                "latitude": st["lat"],
+                "longitude": st["lng"],
+                "grid_id": best_cell.grid_id if best_cell else None,
+                "ambient_grid_value": best_cell.value if best_cell else None,
+                "unit": "µg/m³",
+                "category": best_cell.category if best_cell else "Unknown",
+                "color": best_cell.color if best_cell else "#64748B",
+                "distance_to_cell_km": best_dist,
+            })
+
+        return station_comparisons
 
 
 # Singleton service instance
