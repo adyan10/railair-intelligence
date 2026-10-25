@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { mockRailairService } from '../services/mockRailairService';
 import type { Hotspot } from '../types/railair';
 import { HotspotTable } from '../components/HotspotTable';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, CircleMarker, Popup } from 'react-leaflet';
+import { OpenFreeMapLayer } from '../components/OpenFreeMapLayer';
 import { severityColorClass, formatConcentration, confidenceLabel } from '../lib/formatters';
 import { Flame, MonitorOff, Info } from 'lucide-react';
 
@@ -18,7 +19,13 @@ export function HotspotsPage() {
   const [loading, setLoading] = useState(true);
   const [pollutantFilter, setPollutantFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
-  const [view, setView] = useState<'table' | 'map'>('table');
+  const [view, setView] = useState<'table' | 'map'>(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get('view') === 'map') return 'map';
+    }
+    return 'table';
+  });
 
   useEffect(() => {
     mockRailairService.getHotspots().then((h) => {
@@ -132,17 +139,15 @@ export function HotspotsPage() {
           />
         </div>
       ) : (
-        <div className="bg-navy-800 rounded-xl border border-navy-500 p-1" style={{ height: 480 }}>
+        <div className="bg-navy-800 rounded-xl border border-navy-500 p-1 relative z-0 isolate" style={{ height: 480 }}>
           <MapContainer
             center={[28.82, 77.46]}
             zoom={10}
             scrollWheelZoom
             style={{ height: '100%', width: '100%', borderRadius: 10 }}
+            className="w-full h-full z-0"
           >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; OpenStreetMap contributors &copy; CARTO'
-            />
+            <OpenFreeMapLayer />
             {filtered.map((h) => (
               <CircleMarker
                 key={h.id}
