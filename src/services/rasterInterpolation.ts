@@ -34,28 +34,32 @@ export interface ColorStop {
   r: number;
   g: number;
   b: number;
+  hex: string;
   label: string;
 }
 
-// Windy-inspired continuous color ramps with smooth transitions
+// Documented high-discrimination continuous color ramps (CPCB-aligned with fine spatial milestones)
 export const PM25_COLOR_RAMP: ColorStop[] = [
-  { threshold: 0, r: 16, g: 185, b: 129, label: '0' }, // Teal-Emerald (Good)
-  { threshold: 30, r: 52, g: 211, b: 153, label: '30' }, // Light Emerald
-  { threshold: 60, r: 234, g: 179, b: 8, label: '60' }, // Gold-Amber (Moderate)
-  { threshold: 90, r: 249, g: 115, b: 22, label: '90' }, // Vibrant Orange (Poor)
-  { threshold: 120, r: 239, g: 68, b: 68, label: '120' }, // Coral Red (Very Poor)
-  { threshold: 180, r: 168, g: 85, b: 247, label: '180' }, // Purple-Magenta (Severe)
-  { threshold: 250, r: 112, g: 26, b: 117, label: '250+' }, // Deep Plum (Hazardous)
+  { threshold: 0, r: 16, g: 185, b: 129, hex: '#10B981', label: '0' },     // Emerald (Good)
+  { threshold: 30, r: 132, g: 204, b: 22, hex: '#84CC16', label: '30' },   // Lime (Satisfactory)
+  { threshold: 60, r: 245, g: 158, b: 11, hex: '#F59E0B', label: '60' },   // Amber (Moderate)
+  { threshold: 90, r: 249, g: 115, b: 22, hex: '#F97316', label: '90' },   // Orange (Poor)
+  { threshold: 120, r: 239, g: 68, b: 68, hex: '#EF4444', label: '120' },  // Coral Red (Very Poor lower bound)
+  { threshold: 150, r: 219, g: 39, b: 119, hex: '#DB2777', label: '150' }, // Rose / Magenta
+  { threshold: 180, r: 147, g: 51, b: 234, hex: '#9333EA', label: '180' }, // Violet / Purple
+  { threshold: 250, r: 88, g: 28, b: 135, hex: '#581C87', label: '250+' }, // Deep Plum (Severe)
 ];
 
 export const PM10_COLOR_RAMP: ColorStop[] = [
-  { threshold: 0, r: 16, g: 185, b: 129, label: '0' },
-  { threshold: 50, r: 52, g: 211, b: 153, label: '50' },
-  { threshold: 100, r: 234, g: 179, b: 8, label: '100' },
-  { threshold: 250, r: 249, g: 115, b: 22, label: '250' },
-  { threshold: 350, r: 239, g: 68, b: 68, label: '350' },
-  { threshold: 430, r: 168, g: 85, b: 247, label: '430+' },
-  { threshold: 500, r: 112, g: 26, b: 117, label: '500+' },
+  { threshold: 0, r: 16, g: 185, b: 129, hex: '#10B981', label: '0' },     // Emerald (Good)
+  { threshold: 50, r: 132, g: 204, b: 22, hex: '#84CC16', label: '50' },   // Lime (Satisfactory)
+  { threshold: 100, r: 245, g: 158, b: 11, hex: '#F59E0B', label: '100' }, // Amber (Moderate)
+  { threshold: 175, r: 249, g: 115, b: 22, hex: '#F97316', label: '175' }, // Orange (Poor)
+  { threshold: 250, r: 239, g: 68, b: 68, hex: '#EF4444', label: '250' },  // Coral Red (Very Poor)
+  { threshold: 300, r: 219, g: 39, b: 119, hex: '#DB2777', label: '300' }, // Rose / Magenta
+  { threshold: 350, r: 147, g: 51, b: 234, hex: '#9333EA', label: '350' }, // Violet / Purple
+  { threshold: 430, r: 88, g: 28, b: 135, hex: '#581C87', label: '430' },  // Deep Plum (Severe)
+  { threshold: 500, r: 59, g: 7, b: 100, hex: '#3B0764', label: '500+' },  // Dark Maroon (Hazardous)
 ];
 
 /**
@@ -89,6 +93,31 @@ export function interpolateRampColor(
   }
 
   return { r: last.r, g: last.g, b: last.b };
+}
+
+/**
+ * Returns hex color string (#rrggbb) from continuous color scale for a given concentration.
+ */
+export function interpolateRampColorHex(
+  value: number,
+  pollutant: EnvironmentalPollutant
+): string {
+  const { r, g, b } = interpolateRampColor(value, pollutant);
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+/**
+ * Calculates continuous CSS gradient strictly matching the mathematical stops and percentages of the active color scale.
+ */
+export function getColorScaleGradientCss(pollutant: EnvironmentalPollutant): string {
+  const ramp = pollutant === 'PM2.5' ? PM25_COLOR_RAMP : PM10_COLOR_RAMP;
+  const min = ramp[0].threshold;
+  const max = ramp[ramp.length - 1].threshold;
+  const stops = ramp.map((s) => {
+    const pct = Math.round(((s.threshold - min) / (max - min)) * 1000) / 10;
+    return `${s.hex} ${pct}%`;
+  });
+  return `linear-gradient(to right, ${stops.join(', ')})`;
 }
 
 /**
@@ -170,23 +199,55 @@ export function sampleBilinearConcentration(
 }
 
 /**
- * Smoothstep edge feathering factor [0..1] to soften boundaries into basemap.
+ * Smooth cartographic envelope feathering factor [0..1] with softly rounded corners.
+ * Softens the perimeter boundary without producing a harsh square or looking like an atmospheric wall.
  */
-function edgeFeatherFactor(x: number, y: number, width: number, height: number, featherPx = 14): number {
-  const dLeft = x;
-  const dRight = width - 1 - x;
-  const dTop = y;
-  const dBottom = height - 1 - y;
-  const minDist = Math.min(dLeft, dRight, dTop, dBottom);
+export function roundedEnvelopeFactor(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  cornerRadius = 24,
+  featherWidth = 14
+): number {
+  const dx = Math.min(x, width - 1 - x);
+  const dy = Math.min(y, height - 1 - y);
 
-  if (minDist >= featherPx) return 1.0;
-  if (minDist <= 0) return 0.0;
-  const t = minDist / featherPx;
-  return t * t * (3 - 2 * t); // smoothstep
+  if (dx < 0 || dy < 0) return 0.0;
+
+  // In the corner regions
+  if (dx < cornerRadius && dy < cornerRadius) {
+    const cornerDx = cornerRadius - dx;
+    const cornerDy = cornerRadius - dy;
+    const distToCornerCenter = Math.sqrt(cornerDx * cornerDx + cornerDy * cornerDy);
+    const borderDist = cornerRadius - distToCornerCenter;
+    if (borderDist <= 0) return 0.0;
+    if (borderDist >= featherWidth) return 1.0;
+    const t = borderDist / featherWidth;
+    return t * t * (3 - 2 * t);
+  }
+
+  // Along straight edges
+  const edgeDist = Math.min(dx, dy);
+  if (edgeDist >= featherWidth) return 1.0;
+  if (edgeDist <= 0) return 0.0;
+  const t = edgeDist / featherWidth;
+  return t * t * (3 - 2 * t);
+}
+
+// In-memory raster URL cache to eliminate regeneration lag during 72-month playback
+const rasterUrlCache = new Map<string, string>();
+
+/**
+ * Clears the in-memory raster cache (useful for test isolation).
+ */
+export function clearRasterCache(): void {
+  rasterUrlCache.clear();
 }
 
 /**
  * Generates an interpolated high-resolution canvas raster data URL (256x256).
+ * Uses in-memory caching for zero-latency frame transitions during animation playback.
  */
 export function generateInterpolatedRasterDataUrl(
   cells: GridCellRecord[],
@@ -197,6 +258,12 @@ export function generateInterpolatedRasterDataUrl(
   if (typeof document === 'undefined') {
     return ''; // SSR / non-browser fallback
   }
+
+  // Compute robust cache key using pollutant and full cell values to ensure local edits invalidate cache
+  const cellsSignature = cells.map((c) => `${c.grid_id}:${c.value}`).join(';');
+  const cacheKey = `${pollutant}_${cells.length}_${cellsSignature}`;
+  const cached = rasterUrlCache.get(cacheKey);
+  if (cached) return cached;
 
   const canvas = document.createElement('canvas');
   canvas.width = canvasWidth;
@@ -218,7 +285,7 @@ export function generateInterpolatedRasterDataUrl(
       const lon = west + (x / (canvasWidth - 1)) * (east - west);
       const val = sampleBilinearConcentration(lat, lon, matrix) ?? 0;
       const { r, g, b } = interpolateRampColor(val, pollutant);
-      const feather = edgeFeatherFactor(x, y, canvasWidth, canvasHeight, 12);
+      const feather = roundedEnvelopeFactor(x, y, canvasWidth, canvasHeight, 22, 14);
 
       const idx = (y * canvasWidth + x) * 4;
       data[idx] = r;
@@ -230,5 +297,7 @@ export function generateInterpolatedRasterDataUrl(
   }
 
   ctx.putImageData(imgData, 0, 0);
-  return canvas.toDataURL('image/png');
+  const url = canvas.toDataURL('image/png');
+  rasterUrlCache.set(cacheKey, url);
+  return url;
 }

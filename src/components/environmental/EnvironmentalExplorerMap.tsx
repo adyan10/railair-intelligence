@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   MapContainer,
   ImageOverlay,
@@ -15,6 +15,8 @@ import {
   SlidersHorizontal,
   Maximize2,
   ChevronUp,
+  Compass,
+  Database,
 } from 'lucide-react';
 import { OpenFreeMapLayer } from '../OpenFreeMapLayer';
 import { useEnvironmental } from '../../context/EnvironmentalContext';
@@ -25,9 +27,12 @@ import {
 import {
   CORRIDOR_ENVELOPE,
   generateInterpolatedRasterDataUrl,
+  getColorScaleGradientCss,
   PM25_COLOR_RAMP,
   PM10_COLOR_RAMP,
 } from '../../services/rasterInterpolation';
+import { getZoomScaleState } from '../../services/datasetMetadata';
+import { DatasetCatalogModal } from './DatasetCatalogModal';
 
 // Exact Leaflet bounding box for Delhi-NCR corridor raster
 const RASTER_BOUNDS: LatLngBoundsExpression = [
@@ -38,8 +43,27 @@ const RASTER_BOUNDS: LatLngBoundsExpression = [
 function MapFitController({ triggerReset }: { triggerReset: number }) {
   const map = useMap();
   useEffect(() => {
-    map.fitBounds(latLngBounds(RASTER_BOUNDS), { padding: [35, 35] });
+    const hasExplicitZoom = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('zoom');
+    if (triggerReset > 0 || !hasExplicitZoom) {
+      map.fitBounds(latLngBounds(RASTER_BOUNDS), { padding: [35, 35] });
+    }
   }, [map, triggerReset]);
+  return null;
+}
+
+/**
+ * Tracks current map zoom level for multi-scale geographic coverage awareness.
+ */
+function MapZoomTracker({ onZoomChange }: { onZoomChange: (z: number) => void }) {
+  const map = useMap();
+  useMapEvents({
+    zoomend() {
+      onZoomChange(map.getZoom());
+    },
+  });
+  useEffect(() => {
+    onZoomChange(map.getZoom());
+  }, [map, onZoomChange]);
   return null;
 }
 
@@ -75,10 +99,38 @@ export const EnvironmentalExplorerMap: React.FC = () => {
     setShowStations,
     showDiagnosticGrid,
     setShowDiagnosticGrid,
+    showCoverageBoundary,
+    setShowCoverageBoundary,
+    currentZoom,
+    setCurrentZoom,
+    isDatasetCatalogOpen,
+    setIsDatasetCatalogOpen,
+    activeDataset,
   } = useEnvironmental();
 
   const [resetViewCount, setResetViewCount] = useState(0);
   const [isControlsOpen, setIsControlsOpen] = useState(false);
+  const zoomState = getZoomScaleState(currentZoom);
+
+  const initialZoom = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const z = new URLSearchParams(window.location.search).get('zoom');
+      if (z) {
+        const parsed = parseInt(z, 10);
+        if (!isNaN(parsed) && parsed >= 4 && parsed <= 14) return parsed;
+      }
+    }
+    return 10;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cat = new URLSearchParams(window.location.search).get('catalog');
+      if (cat === 'true' || cat === '1') {
+        setIsDatasetCatalogOpen(true);
+      }
+    }
+  }, [setIsDatasetCatalogOpen]);
 
   // Dual-buffer raster URLs for smooth animated cross-fades during playback
   const [activeRasterUrl, setActiveRasterUrl] = useState<string>('');
@@ -133,14 +185,15 @@ export const EnvironmentalExplorerMap: React.FC = () => {
     <div className="relative w-full h-full min-h-[500px] flex-1 bg-slate-950 overflow-hidden select-none">
       <MapContainer
         center={[28.818, 77.493]}
-        zoom={10}
-        minZoom={7}
+        zoom={initialZoom}
+        minZoom={4}
         maxZoom={14}
         className="w-full h-full z-0 cursor-crosshair"
         scrollWheelZoom={true}
       >
         <OpenFreeMapLayer />
         <MapFitController triggerReset={resetViewCount} />
+        <MapZoomTracker onZoomChange={setCurrentZoom} />
         <MapClickHandler onCoordinateClick={handleMapClick} />
 
         {/* Previous Frame (for smooth cross-fade animation) */}
@@ -161,6 +214,26 @@ export const EnvironmentalExplorerMap: React.FC = () => {
             opacity={layerOpacity}
             zIndex={10}
           />
+        )}
+
+        {/* Subtle Dataset Coverage Extent Frame (prevents mistaking edge for atmospheric boundary) */}
+        {showCoverageBoundary && (
+          <Rectangle
+            bounds={RASTER_BOUNDS}
+            pathOptions={{
+              color: '#38BDF8',
+              weight: 1.2,
+              dashArray: '4, 6',
+              fill: false,
+              opacity: currentZoom < 9 ? 0.8 : 0.35,
+            }}
+          >
+            <Tooltip direction="bottom" permanent={currentZoom < 8} offset={[0, 10]} opacity={0.9}>
+              <div className="font-mono text-[10px] text-slate-200 bg-slate-950/90 px-1.5 py-0.5 rounded border border-slate-700 shadow">
+                DELHI–NCR 10 KM MODEL FOOTPRINT (64 CELLS)
+              </div>
+            </Tooltip>
+          </Rectangle>
         )}
 
         {/* Optional Secondary Diagnostic Grid (64 Cells Wireframe) */}
@@ -196,8 +269,8 @@ export const EnvironmentalExplorerMap: React.FC = () => {
                   radius={isSelected ? 4 : 2}
                   pathOptions={{
                     color: isSelected ? '#38BDF8' : '#64748B',
-                    fillColor: isSelected ? '#38BDF8' : '#94A3B8',
-                    fillOpacity: 0.8,
+                    fillColor: isSelected ? '#38BDF8' : (cell.color || '#94A3B8'),
+                    fillOpacity: 0.9,
                     weight: 1,
                   }}
                 >
@@ -247,11 +320,11 @@ export const EnvironmentalExplorerMap: React.FC = () => {
           />
         )}
 
-        {/* 7 Canonical RailAir Corridor Stations */}
+        {/* Canonical Corridor Stations (7 Nodes) */}
         {showStations &&
           CANONICAL_CORRIDOR_STATIONS.map((st) => (
             <CircleMarker
-              key={st.id}
+              key={`${st.id}-${currentZoom >= 9 ? 'labeled' : 'unlabeled'}`}
               center={[st.lat, st.lng]}
               radius={5.5}
               pathOptions={{
@@ -260,9 +333,12 @@ export const EnvironmentalExplorerMap: React.FC = () => {
                 fillOpacity: 1.0,
                 weight: 2,
               }}
+              eventHandlers={{
+                click: () => inspectCoordinate(st.lat, st.lng),
+              }}
             >
               <Tooltip
-                permanent
+                permanent={currentZoom >= 9}
                 direction="right"
                 offset={[8, 0]}
                 className="corridor-station-label"
@@ -274,6 +350,36 @@ export const EnvironmentalExplorerMap: React.FC = () => {
             </CircleMarker>
           ))}
       </MapContainer>
+
+      {/* Multi-Scale Geographic Coverage Banner (Appears when zoomed out beyond corridor) */}
+      {currentZoom < 9 && (
+        <div className="absolute top-[72px] left-1/2 -translate-x-1/2 z-[400] pointer-events-auto max-w-xl w-[90%]">
+          <div className="flex items-center justify-between gap-3 px-4 py-2 rounded-xl bg-slate-900/95 border border-sky-500/40 text-white shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Compass className="w-4 h-4 text-sky-400 shrink-0" />
+              <div className="min-w-0 text-xs">
+                <div className="font-bold text-sky-200 flex items-center gap-2">
+                  <span>{zoomState.label}</span>
+                  <span className="text-[10px] font-normal text-slate-400 bg-slate-800 px-1.5 py-0.2 rounded border border-slate-700">
+                    Zoom {currentZoom}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-300 truncate">
+                  {zoomState.message}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setResetViewCount((c) => c + 1)}
+              className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center gap-1 shrink-0 shadow"
+              title="Reset map view to the 83 km Meerut-Delhi corridor"
+            >
+              <Maximize2 className="w-3 h-3" />
+              Focus Corridor
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sleek, Collapsible Floating Layer Controls (Top Right) */}
       <div className="absolute top-4 right-4 z-10 font-mono text-xs">
@@ -288,7 +394,7 @@ export const EnvironmentalExplorerMap: React.FC = () => {
             <span className="text-[10px] text-slate-400">({Math.round(layerOpacity * 100)}%)</span>
           </button>
         ) : (
-          <div className="bg-slate-900/95 backdrop-blur-md p-3.5 rounded-xl border border-slate-700/80 shadow-2xl text-white w-64 space-y-3 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-slate-900/95 backdrop-blur-md p-3.5 rounded-xl border border-slate-700/80 shadow-2xl text-white w-72 space-y-3 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-700/60 pb-2">
               <span className="font-semibold text-slate-200 flex items-center gap-1.5 text-xs">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-sky-400" />
@@ -312,6 +418,15 @@ export const EnvironmentalExplorerMap: React.FC = () => {
               </div>
             </div>
 
+            {/* Active Model Indicator */}
+            <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800 text-[10px]">
+              <div className="text-slate-400 font-sans">Active Historical Foundation:</div>
+              <div className="font-bold text-sky-300 truncate">{activeDataset.short_name}</div>
+              <div className="text-[9px] text-slate-400 mt-0.5">
+                Resolution: 10 km · Scope: Regional Corridor (64 Nodes)
+              </div>
+            </div>
+
             {/* Opacity Slider */}
             <div>
               <div className="flex justify-between text-[11px] text-slate-300 mb-1">
@@ -329,12 +444,22 @@ export const EnvironmentalExplorerMap: React.FC = () => {
                 aria-label="Raster opacity slider"
               />
               <div className="text-[9px] text-slate-400 mt-1">
-                Reveals roads and place names beneath
+                Reveals roads, rivers, and places beneath
               </div>
             </div>
 
             {/* Layer Toggles */}
             <div className="space-y-1.5 pt-1 text-[11px] text-slate-300 border-t border-slate-800">
+              <label className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
+                <input
+                  type="checkbox"
+                  checked={showCoverageBoundary}
+                  onChange={(e) => setShowCoverageBoundary(e.target.checked)}
+                  className="rounded text-sky-500 focus:ring-0 bg-slate-800 border-slate-600"
+                />
+                <span>Coverage Extent Boundary</span>
+              </label>
+
               <label className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
                 <input
                   type="checkbox"
@@ -365,9 +490,26 @@ export const EnvironmentalExplorerMap: React.FC = () => {
                 <span className="text-slate-400">Diagnostic Grid (64 Cells)</span>
               </label>
             </div>
+
+            {/* Dataset Metadata & Provenance Button */}
+            <div className="pt-2 border-t border-slate-800">
+              <button
+                onClick={() => setIsDatasetCatalogOpen(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-sky-300 text-[11px] transition-colors border border-slate-700/60 font-semibold"
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span>Dataset Catalog & Provenance</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Dataset Catalog & Provenance Modal */}
+      <DatasetCatalogModal
+        isOpen={isDatasetCatalogOpen}
+        onClose={() => setIsDatasetCatalogOpen(false)}
+      />
 
       {/* Legible Windy-Style Continuous Gradient Legend (Bottom Left) */}
       <div className="absolute bottom-4 left-4 z-10 bg-slate-950/85 backdrop-blur-md p-2.5 sm:p-3 rounded-xl border border-slate-700/60 shadow-xl text-white font-mono text-[10px] w-60 sm:w-72">
@@ -376,14 +518,11 @@ export const EnvironmentalExplorerMap: React.FC = () => {
           <span className="text-slate-400 text-[9px]">µg/m³</span>
         </div>
 
-        {/* Continuous Linear Gradient Ramp */}
+        {/* Continuous Linear Gradient Ramp (Dynamically aligned with active scale) */}
         <div
           className="h-2 rounded-full border border-slate-700/70 shadow-inner mb-1"
           style={{
-            background:
-              pollutant === 'PM2.5'
-                ? 'linear-gradient(to right, #10B981 0%, #34D399 15%, #EAB308 30%, #F97316 45%, #EF4444 65%, #A855F7 85%, #701A75 100%)'
-                : 'linear-gradient(to right, #10B981 0%, #34D399 15%, #EAB308 25%, #F97316 50%, #EF4444 70%, #A855F7 85%, #701A75 100%)',
+            background: getColorScaleGradientCss(pollutant),
           }}
         />
 

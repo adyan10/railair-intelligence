@@ -5,8 +5,10 @@ import type {
   EnvironmentalGridResponse,
   GridCellRecord,
   LocationInspectionResponse,
+  DatasetMetadata,
 } from '../types/environmental';
 import { environmentalApiClient } from '../services/environmentalApiClient';
+import { getActiveDataset } from '../services/datasetMetadata';
 
 export interface EnvironmentalContextType {
   pollutant: EnvironmentalPollutant;
@@ -37,8 +39,13 @@ export interface EnvironmentalContextType {
   setShowHotspots: (show: boolean) => void;
   showDiagnosticGrid: boolean;
   setShowDiagnosticGrid: (show: boolean) => void;
-  showCpcbMonitors: boolean;
-  setShowCpcbMonitors: (show: boolean) => void;
+  showCoverageBoundary: boolean;
+  setShowCoverageBoundary: (show: boolean) => void;
+  currentZoom: number;
+  setCurrentZoom: (zoom: number) => void;
+  isDatasetCatalogOpen: boolean;
+  setIsDatasetCatalogOpen: (open: boolean) => void;
+  activeDataset: DatasetMetadata;
   isLoading: boolean;
   error: string | null;
 }
@@ -66,6 +73,9 @@ export const EnvironmentalProvider: React.FC<{ children: React.ReactNode }> = ({
   const [showCorridor, setShowCorridor] = useState<boolean>(true);
   const [showStations, setShowStations] = useState<boolean>(true);
   const [showHotspots, setShowHotspots] = useState<boolean>(false);
+  const [showCoverageBoundary, setShowCoverageBoundary] = useState<boolean>(true);
+  const [currentZoom, setCurrentZoom] = useState<number>(10);
+  const [isDatasetCatalogOpen, setIsDatasetCatalogOpen] = useState<boolean>(false);
   const [showDiagnosticGrid, setShowDiagnosticGrid] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const d = new URLSearchParams(window.location.search).get('diagnostic');
@@ -260,6 +270,13 @@ export const EnvironmentalProvider: React.FC<{ children: React.ReactNode }> = ({
     setShowStations,
     showHotspots,
     setShowHotspots,
+    showCoverageBoundary,
+    setShowCoverageBoundary,
+    currentZoom,
+    setCurrentZoom,
+    isDatasetCatalogOpen,
+    setIsDatasetCatalogOpen,
+    activeDataset: getActiveDataset(),
     showDiagnosticGrid,
     setShowDiagnosticGrid,
     showCpcbMonitors,

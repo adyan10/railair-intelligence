@@ -52,21 +52,35 @@ export const LocationInspectorPanel: React.FC = () => {
           </span>
         </div>
 
-        <div className="text-2xl font-bold text-slate-100 flex items-baseline gap-1.5 mt-1">
-          <span>{displayVal ?? 'NA'}</span>
-          <span className="text-xs font-normal text-slate-400">µg/m³</span>
+        <div className="flex items-baseline justify-between mt-1">
+          <div className="text-2xl font-bold text-slate-100 flex items-baseline gap-1.5">
+            <span>{displayVal ?? 'NA'}</span>
+            <span className="text-xs font-normal text-slate-400">µg/m³</span>
+          </div>
+          <span className="text-[10px] text-sky-400 bg-sky-950/60 border border-sky-800/70 px-1.5 py-0.5 rounded font-mono">
+            {distToNode !== undefined && distToNode > 0 ? 'Interpolated Field' : 'Source Node'}
+          </span>
         </div>
 
-        <div className="text-[10px] text-slate-400 mt-2 space-y-0.5">
-          <div>
-            Clicked Point: {queryLat?.toFixed(4)}°N, {queryLon?.toFixed(4)}°E
+        <div className="text-[10px] text-slate-400 mt-2 space-y-1 pt-1.5 border-t border-slate-800/60">
+          <div className="flex justify-between">
+            <span>Query Coordinate:</span>
+            <span className="text-slate-300 font-mono">{queryLat?.toFixed(4)}°N, {queryLon?.toFixed(4)}°E</span>
           </div>
           {sourceGridId && (
-            <div className="text-slate-400 flex items-center justify-between">
-              <span>Source Node: {sourceGridId}</span>
-              {distToNode !== undefined && distToNode > 0 && (
-                <span>({distToNode} km to node)</span>
-              )}
+            <div className="flex justify-between">
+              <span>Underlying 10km Cell:</span>
+              <span className="text-slate-300 font-mono">
+                {sourceGridId} ({distToNode !== undefined && distToNode > 0 ? `${distToNode} km away` : 'Centroid'})
+              </span>
+            </div>
+          )}
+          {selectedCell && selectedCell.value !== null && (
+            <div className="flex justify-between">
+              <span>Source Node Baseline:</span>
+              <span className="text-sky-300 font-bold font-mono">
+                {selectedCell.value} µg/m³ ({selectedCell.category})
+              </span>
             </div>
           )}
         </div>

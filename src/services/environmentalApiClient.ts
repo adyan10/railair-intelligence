@@ -25,6 +25,7 @@ import type {
   GridCellRecord,
   TimeSeriesPoint,
 } from '../types/environmental';
+import { interpolateRampColorHex } from './rasterInterpolation';
 
 const API_BASE = '/api/v1/environmental';
 
@@ -109,18 +110,21 @@ export function generatePeriods(): EnvironmentalPeriod[] {
 // Fallback seasonal value generator for Delhi NCR (winter peak Nov-Jan, monsoon dip Jul-Sep)
 function getSeasonalValue(pollutant: EnvironmentalPollutant, year: number, month: number, latIdx: number, lonIdx: number): number {
   const base = pollutant === 'PM2.5' ? 95 : 195;
-  // Seasonal factor (highest in Dec/Jan ~1.8x, lowest in Jul/Aug ~0.45x)
+  // Seasonal factor (highest in Dec/Jan ~1.7x, lowest in Jul/Aug ~0.3x)
   const angle = ((month - 1) / 12) * 2 * Math.PI;
-  const seasonalMultiplier = 1.0 - 0.65 * Math.sin(angle) + 0.35 * Math.cos(angle);
-  // Spatial gradient: southern/industrial and Delhi core (low lat, low lon) slightly higher
-  const spatialFactor = 1.0 + (3 - latIdx) * 0.04 + (3 - lonIdx) * 0.03;
+  const seasonalMultiplier = 1.0 - 0.35 * Math.sin(angle) + 0.68 * Math.cos(angle);
+  // Spatial gradient: southwest lower, northeast/rail corridor higher
+  const spatialFactor = 1.0 + (latIdx - 3.5) * 0.02 + (lonIdx - 3.5) * 0.04;
   // Multi-year drift: 2020 COVID lockdown slight dip, 2021 rebound
-  const yearOffset = year === 2020 ? -12 : year === 2021 ? 4 : (year - 2017) * 1.5;
+  const yearOffset = year === 2020 ? -10 : year === 2021 ? 3 : (year - 2017) * 1.5;
   const val = Math.max(pollutant === 'PM2.5' ? 25 : 55, (base + yearOffset) * seasonalMultiplier * spatialFactor);
   return Math.round(val * 10) / 10;
 }
 
 export class EnvironmentalApiClient {
+  private gridCache = new Map<string, EnvironmentalGridResponse>();
+  private timeseriesCache = new Map<string, EnvironmentalTimeSeriesResponse>();
+
   async fetchPeriods(pollutant: EnvironmentalPollutant = 'PM2.5'): Promise<EnvironmentalPeriod[]> {
     try {
       const res = await fetch(`${API_BASE}/periods?pollutant=${pollutant}`);
@@ -139,10 +143,23 @@ export class EnvironmentalApiClient {
     year: number = 2022,
     month: number = 12
   ): Promise<EnvironmentalGridResponse> {
+    const cacheKey = `${pollutant}_${year}_${month}`;
+    const cached = this.gridCache.get(cacheKey);
+    if (cached) return cached;
+
     try {
       const res = await fetch(`${API_BASE}/grid?pollutant=${pollutant}&year=${year}&month=${month}`);
       if (res.ok) {
-        return await res.json();
+        const data = await res.json();
+        const enriched = {
+          ...data,
+          cells: data.cells.map((c: GridCellRecord) => ({
+            ...c,
+            color: c.value !== null ? interpolateRampColorHex(c.value, pollutant) : c.color,
+          })),
+        };
+        this.gridCache.set(cacheKey, enriched);
+        return enriched;
       }
     } catch {
       // Offline fallback
@@ -156,7 +173,8 @@ export class EnvironmentalApiClient {
       LONS.forEach((lon, cIdx) => {
         const val = getSeasonalValue(pollutant, year, month, rIdx, cIdx);
         values.push(val);
-        const { category, color } = classifyAqi(pollutant, val);
+        const { category } = classifyAqi(pollutant, val);
+        const color = interpolateRampColorHex(val, pollutant);
 
         let nearestSt: string | null = null;
         let minDist = Infinity;
@@ -212,7 +230,7 @@ export class EnvironmentalApiClient {
       cpcb_dominant_category: domCat,
     };
 
-    return {
+    const fallbackGrid: EnvironmentalGridResponse = {
       dataset_id: 'zenodo_gridded_pm_v2',
       pollutant,
       unit: 'µg/m³',
@@ -223,6 +241,8 @@ export class EnvironmentalApiClient {
       summary,
       cells,
     };
+    this.gridCache.set(cacheKey, fallbackGrid);
+    return fallbackGrid;
   }
 
   async fetchTimeseries(
@@ -231,6 +251,10 @@ export class EnvironmentalApiClient {
     lon?: number,
     pollutant: EnvironmentalPollutant = 'PM2.5'
   ): Promise<EnvironmentalTimeSeriesResponse> {
+    const cacheKey = `${pollutant}_${gridId ?? ''}_${lat ?? ''}_${lon ?? ''}`;
+    const cached = this.timeseriesCache.get(cacheKey);
+    if (cached) return cached;
+
     const params = new URLSearchParams();
     if (gridId) params.append('grid_id', gridId);
     if (lat !== undefined) params.append('lat', String(lat));
@@ -240,7 +264,9 @@ export class EnvironmentalApiClient {
     try {
       const res = await fetch(`${API_BASE}/timeseries?${params.toString()}`);
       if (res.ok) {
-        return await res.json();
+        const data = await res.json();
+        this.timeseriesCache.set(cacheKey, data);
+        return data;
       }
     } catch {
       // Offline fallback
@@ -277,7 +303,7 @@ export class EnvironmentalApiClient {
     const wMean = winter.length ? Math.round((winter.reduce((a, b) => a + b, 0) / winter.length) * 10) / 10 : mean;
     const mMean = monsoon.length ? Math.round((monsoon.reduce((a, b) => a + b, 0) / monsoon.length) * 10) / 10 : mean;
 
-    return {
+    const fallbackTimeseries: EnvironmentalTimeSeriesResponse = {
       dataset_id: 'zenodo_gridded_pm_v2',
       pollutant,
       unit: 'µg/m³',
@@ -292,6 +318,8 @@ export class EnvironmentalApiClient {
       winter_peak_mean: wMean,
       monsoon_dip_mean: mMean,
     };
+    this.timeseriesCache.set(cacheKey, fallbackTimeseries);
+    return fallbackTimeseries;
   }
 
   async fetchHotspots(

@@ -120,6 +120,57 @@ def classify_aqi_category(pollutant: str, value: Optional[float]) -> Tuple[str, 
         return "Standard", "#64748B"
 
 
+# Documented continuous color ramp thresholds for high spatial discrimination
+PM25_CONTINUOUS_RAMP = [
+    (0.0, (16, 185, 129)),     # #10B981 Emerald (Good)
+    (30.0, (132, 204, 22)),    # #84CC16 Lime (Satisfactory)
+    (60.0, (245, 158, 11)),    # #F59E0B Amber (Moderate)
+    (90.0, (249, 115, 22)),    # #F97316 Orange (Poor)
+    (120.0, (239, 68, 68)),    # #EF4444 Coral Red (Very Poor lower bound)
+    (150.0, (219, 39, 119)),   # #DB2777 Rose / Magenta
+    (180.0, (147, 51, 234)),   # #9333EA Violet / Purple
+    (250.0, (88, 28, 135)),    # #581C87 Deep Plum (Severe)
+]
+
+PM10_CONTINUOUS_RAMP = [
+    (0.0, (16, 185, 129)),     # #10B981 Emerald (Good)
+    (50.0, (132, 204, 22)),    # #84CC16 Lime (Satisfactory)
+    (100.0, (245, 158, 11)),   # #F59E0B Amber (Moderate)
+    (175.0, (249, 115, 22)),   # #F97316 Orange (Poor)
+    (250.0, (239, 68, 68)),    # #EF4444 Coral Red (Very Poor)
+    (300.0, (219, 39, 119)),   # #DB2777 Rose / Magenta
+    (350.0, (147, 51, 234)),   # #9333EA Violet / Purple
+    (430.0, (88, 28, 135)),    # #581C87 Deep Plum (Severe)
+    (500.0, (59, 7, 100)),     # #3B0764 Dark Maroon (Hazardous)
+]
+
+
+def interpolate_ramp_color_hex(pollutant: str, value: Optional[float]) -> str:
+    """Calculates continuous hex color corresponding to exact concentration on documented scale."""
+    if value is None:
+        return "#94A3B8"
+    p = pollutant.strip().upper()
+    ramp = PM25_CONTINUOUS_RAMP if p == "PM2.5" else PM10_CONTINUOUS_RAMP
+    if value <= ramp[0][0]:
+        r, g, b = ramp[0][1]
+        return f"#{r:02x}{g:02x}{b:02x}"
+    if value >= ramp[-1][0]:
+        r, g, b = ramp[-1][1]
+        return f"#{r:02x}{g:02x}{b:02x}"
+    for i in range(len(ramp) - 1):
+        t0, (r0, g0, b0) = ramp[i]
+        t1, (r1, g1, b1) = ramp[i + 1]
+        if t0 <= value <= t1:
+            t = (value - t0) / (t1 - t0)
+            r = round(r0 + t * (r1 - r0))
+            g = round(g0 + t * (g1 - g0))
+            b = round(b0 + t * (b1 - b0))
+            return f"#{r:02x}{g:02x}{b:02x}"
+    r, g, b = ramp[-1][1]
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+
 class EnvironmentalService:
     def __init__(self) -> None:
         self._ground_readings: Optional[List[GroundStationReading]] = None
@@ -748,7 +799,8 @@ class EnvironmentalService:
 
         for e in matching:
             val = e.value
-            cat, col = classify_aqi_category(p_upper, val)
+            cat, _ = classify_aqi_category(p_upper, val)
+            col = interpolate_ramp_color_hex(p_upper, val)
             if val is not None:
                 values.append(val)
 

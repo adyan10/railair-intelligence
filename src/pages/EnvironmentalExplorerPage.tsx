@@ -51,11 +51,20 @@ export const EnvironmentalExplorerPage: React.FC = () => {
 
         {/* Right Floating Summary Pill */}
         {gridData && (
-          <div className="hidden sm:flex items-center gap-2 pointer-events-auto bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/70 shadow-xl font-mono text-xs text-white">
-            <span className="text-slate-400 text-[11px]">Regional Mean:</span>
-            <span className="font-bold text-slate-100">
-              {gridData.summary.mean} {gridData.unit}
-            </span>
+          <div className="hidden sm:flex items-center gap-2.5 pointer-events-auto bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/70 shadow-xl font-mono text-xs text-white">
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 text-[10px]">Regional Mean:</span>
+              <span className="font-bold text-slate-100">
+                {gridData.summary.mean} {gridData.unit}
+              </span>
+            </div>
+            <span className="text-slate-600">·</span>
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-300">
+              <span className="text-slate-400">Spread:</span>
+              <span className="font-semibold text-sky-300">
+                {gridData.summary.min} – {gridData.summary.max}
+              </span>
+            </div>
             <span
               className="w-2.5 h-2.5 rounded-full shadow-xs"
               style={{
@@ -70,7 +79,7 @@ export const EnvironmentalExplorerPage: React.FC = () => {
                     ? '#F97316'
                     : '#EF4444',
               }}
-              title={`Dominant Category: ${gridData.summary.cpcb_dominant_category}`}
+              title={`Dominant CPCB Category: ${gridData.summary.cpcb_dominant_category}`}
             />
           </div>
         )}

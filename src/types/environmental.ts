@@ -141,3 +141,51 @@ export interface CorridorStationComparison {
   color: string;
   distance_to_cell_km: number | null;
 }
+
+export type MeasurementType =
+  | 'modelled_estimate'
+  | 'ground_observation'
+  | 'satellite'
+  | 'reanalysis'
+  | 'simulated';
+
+export type DatasetCoverageScope =
+  | 'regional_corridor'
+  | 'point_national'
+  | 'national_india'
+  | 'global';
+
+export interface DatasetTemporalCoverage {
+  start: string;
+  end: string;
+  total_periods: number;
+  period_type: 'monthly' | 'hourly_telemetry' | 'static_benchmark';
+}
+
+export interface DatasetSpatialCoverage {
+  name: string;
+  bounds: GridCellBounds;
+  resolution_km: number | string;
+  node_count?: number;
+  scope: DatasetCoverageScope;
+}
+
+export interface DatasetMetadata {
+  dataset_id: string;
+  title: string;
+  short_name: string;
+  publisher: string;
+  source_url: string;
+  license: string;
+  variables: string[];
+  units: string;
+  temporal_coverage: DatasetTemporalCoverage;
+  spatial_coverage: DatasetSpatialCoverage;
+  measurement_type: MeasurementType;
+  measurement_label: string;
+  methodology: string;
+  no_data_handling: string;
+  provenance_notes: string;
+  is_active: boolean;
+  is_available: boolean;
+}
