@@ -115,3 +115,91 @@ class HealthResponse(BaseModel):
     version: str = Field(..., description="Application semantic version")
     environment: str = Field(..., description="Active environment (development | production)")
     database: DatabaseHealth = Field(..., description="Database connectivity state")
+
+
+# ==============================================================================
+# Environmental Ingestion & Observation Schemas
+# ==============================================================================
+
+class EnvironmentalDatasetInfo(BaseModel):
+    id: str = Field(..., description="Dataset identifier")
+    title: str = Field(..., description="Official dataset title")
+    publisher: str = Field(..., description="Data provider or publishing organization")
+    persistent_id: Optional[str] = Field(None, description="DOI, UUID, or citation identifier")
+    version: str = Field(..., description="Dataset release version")
+    license: str = Field(..., description="Data reuse license")
+    source_filename: str = Field(..., description="Local source file name")
+    sha256: str = Field(..., description="SHA-256 integrity checksum")
+    spatial_coverage: str = Field(..., description="Geographical extent")
+    temporal_coverage: str = Field(..., description="Date or time range")
+    measurement_type: str = Field(..., description="Scientific measurement classification")
+    record_count: int = Field(..., description="Total or subset record count")
+    notes: Optional[str] = Field(None, description="Scientific provenance notes or caveats")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class GroundStationReading(BaseModel):
+    id: str = Field(..., description="Observation ID")
+    station_name: str = Field(..., description="Source CAAQMS station name")
+    city: str = Field(..., description="Station city")
+    state: str = Field(..., description="Station state")
+    latitude: float = Field(..., ge=-90.0, le=90.0, description="WGS84 latitude")
+    longitude: float = Field(..., ge=-180.0, le=180.0, description="WGS84 longitude")
+    pollutant: str = Field(..., description="Pollutant parameter (PM2.5, PM10, NO2, etc.)")
+    value_avg: Optional[float] = Field(None, description="Average concentration (null if sensor NA)")
+    value_min: Optional[float] = Field(None, description="Minimum concentration")
+    value_max: Optional[float] = Field(None, description="Maximum concentration")
+    unit: str = Field(..., description="Measurement unit (e.g. µg/m³)")
+    observed_at: str = Field(..., description="ISO 8601 observation timestamp")
+    acquisition_at: str = Field(..., description="ISO 8601 acquisition timestamp")
+    quality_status: str = Field(..., description="Observation quality (valid | missing_na)")
+    is_corridor: bool = Field(..., description="Whether station is within RailAir corridor")
+    nearest_canonical_station_id: Optional[str] = Field(None, description="Mapped canonical corridor station ID")
+    distance_to_canonical_km: Optional[float] = Field(None, description="Distance to nearest canonical station in km")
+    dataset_id: str = Field(..., description="Source dataset ID")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class GriddedCorridorEstimate(BaseModel):
+    id: str = Field(..., description="Unique gridded record ID")
+    grid_id: str = Field(..., description="Grid cell identifier")
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    pollutant: str = Field(..., description="Pollutant (PM2.5 or PM10)")
+    value: Optional[float] = Field(None, description="Monthly mean concentration")
+    unit: str = Field(default="µg/m³")
+    year: int = Field(..., ge=2000, le=2100)
+    month: int = Field(..., ge=1, le=12)
+    observed_at: str = Field(..., description="ISO 8601 normalized monthly timestamp")
+    observation_type: str = Field(default="gridded_surface_estimate")
+    spatial_resolution: str = Field(default="10km")
+    temporal_resolution: str = Field(default="monthly_mean")
+    source_file: str = Field(...)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class MeteorologicalReading(BaseModel):
+    id: str = Field(..., description="Reading ID")
+    station_name: str = Field(..., description="Station or site name")
+    city: str = Field(..., description="City")
+    state: str = Field(..., description="State")
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    variable_name: str = Field(..., description="Parameter name (CO, NO2, Temperature, Wind_U, etc.)")
+    value: Optional[float] = Field(None, description="Observed or reanalysis value")
+    unit: str = Field(..., description="Scientific unit (mol/m², K, m/s)")
+    measurement_type: str = Field(..., description="Derivation classification")
+    observed_at: str = Field(..., description="ISO 8601 timestamp")
+    year: int = Field(...)
+    month: int = Field(...)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class EnvironmentalInventoryResponse(BaseModel):
+    datasets: List[EnvironmentalDatasetInfo]
+    total_datasets: int
+    environment_provider: str = Field(default="hybrid_in_memory_postgis")

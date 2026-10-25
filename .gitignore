@@ -37,4 +37,10 @@ htmlcov/
 
 
 # Large environmental source datasets
-/backend-resources/zenodo-data/pm25-full_rel-2026-07-r0_s-1.0_mb-1.3-r0.nc
+backend-resources/data-gov-in/
+backend-resources/mendeley-pollution-data/
+backend-resources/zenodo-data/
+backend-resources/zeonodo-data2/
+
+# Heavy generated audit metrics
+backend-resources/environmental-audit-output/environmental_audit_metrics.json

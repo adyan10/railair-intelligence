@@ -1,0 +1,130 @@
+{
+  "title": "RailAir Corridor Monthly Gridded PM2.5 and PM10 (2017\u20132022)",
+  "bounds": {
+    "min_lat": 28.45,
+    "max_lat": 29.2,
+    "min_lon": 77.1,
+    "max_lon": 77.9
+  },
+  "grid_shape": {
+    "lat_count": 8,
+    "lon_count": 8,
+    "total_cells": 64
+  },
+  "latitudes": [
+    28.467,
+    28.5673,
+    28.6676,
+    28.7679,
+    28.8682,
+    28.9685,
+    29.0688,
+    29.1691
+  ],
+  "longitudes": [
+    77.1429,
+    77.2431,
+    77.3434,
+    77.4436,
+    77.5439,
+    77.6441,
+    77.7444,
+    77.8446
+  ],
+  "temporal_range": {
+    "start_year": 2017,
+    "end_year": 2022,
+    "total_months": 72
+  },
+  "total_records": 9216,
+  "pm25_records": 4608,
+  "pm10_records": 4608,
+  "file_manifest": [
+    {
+      "pollutant": "PM2.5",
+      "year": 2017,
+      "filename": "pm25_arr_10km_2017_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "d776e7502db938c99b3fc034f2ac9d3b42538177aec6da688d39b35f666c3b85"
+    },
+    {
+      "pollutant": "PM2.5",
+      "year": 2018,
+      "filename": "pm25_arr_10km_2018_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "e28d92843a63d6754575ad8be7b2a8adcb9f8b0dd1227cf86e2deb69fe5b8470"
+    },
+    {
+      "pollutant": "PM2.5",
+      "year": 2019,
+      "filename": "pm25_arr_10km_2019_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "ce123477cd3d1b96e1b566dafa396d0d57bb06be3b8fcf86abbb8f8f0db04e3b"
+    },
+    {
+      "pollutant": "PM2.5",
+      "year": 2020,
+      "filename": "pm25_arr_10km_2020_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "ad72071d575eb81ea8ff13d0003a4ba77b889ab07e7faf4bc5f75875227c3d98"
+    },
+    {
+      "pollutant": "PM2.5",
+      "year": 2021,
+      "filename": "pm25_arr_10km_2021_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "4cee60b54d3ccd62db585c641e1b0d9fc08b2b48d0a956020e951f5fd10eca12"
+    },
+    {
+      "pollutant": "PM2.5",
+      "year": 2022,
+      "filename": "pm25_arr_10km_2022_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "8358e4d10b463ddade2e153570bcca8fce36c3302ed63254369bdca23c6a2f72"
+    },
+    {
+      "pollutant": "PM10",
+      "year": 2017,
+      "filename": "pm10_arr_10km_2017_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "20ee7d2aea21c9235d1b1c45a5019c0b6d658d8d25ac3265d3368502c69326c0"
+    },
+    {
+      "pollutant": "PM10",
+      "year": 2018,
+      "filename": "pm10_arr_10km_2018_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "99a8b9ff52f29a8f7251f72b14f836b93b16a047a87fb0a208b837301bcbe5e1"
+    },
+    {
+      "pollutant": "PM10",
+      "year": 2019,
+      "filename": "pm10_arr_10km_2019_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "efa52dfeb72b86e37f57e393da590d3a4848069087bf552053b8d296c91332fb"
+    },
+    {
+      "pollutant": "PM10",
+      "year": 2020,
+      "filename": "pm10_arr_10km_2020_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "dfba486029dcc349cf5be2833fba260b7fb9b40261dcbf70092cf63c9d3a4119"
+    },
+    {
+      "pollutant": "PM10",
+      "year": 2021,
+      "filename": "pm10_arr_10km_2021_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "637a782f432cfb43c8e77d9a58e299dcd16c299c899d845d6e56aa9c517f8dcc"
+    },
+    {
+      "pollutant": "PM10",
+      "year": 2022,
+      "filename": "pm10_arr_10km_2022_monthly.nc",
+      "records_extracted": 768,
+      "sha256": "9fcf8c594cde2347dffc2b1bb80cd864344d0afe8a5e5024bee3eab09027963c"
+    }
+  ],
+  "generated_file": "corridor_pm_monthly_2017_2022.json",
+  "generated_size_bytes": 6954816
+}
