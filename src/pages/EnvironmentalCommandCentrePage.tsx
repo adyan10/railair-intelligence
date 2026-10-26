@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   Calendar,
   Loader2,
+  Brain,
+  ArrowRight,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -28,6 +30,7 @@ import {
 import { useEnvironmental } from '../context/EnvironmentalContext';
 import { environmentalApiClient } from '../services/environmentalApiClient';
 import type { CorridorStationComparison, HotspotRankItem, TimeSeriesPoint } from '../types/environmental';
+import type { ForecastResponse, HealthRiskAdvisoryResponse } from '../types/environmentalAi';
 
 export const EnvironmentalCommandCentrePage: React.FC = () => {
   const navigate = useNavigate();
@@ -46,6 +49,8 @@ export const EnvironmentalCommandCentrePage: React.FC = () => {
   const [hotspots, setHotspots] = useState<HotspotRankItem[]>([]);
   const [corridorComparison, setCorridorComparison] = useState<CorridorStationComparison[]>([]);
   const [timeseries, setTimeseries] = useState<TimeSeriesPoint[]>([]);
+  const [aiAdvisory, setAiAdvisory] = useState<HealthRiskAdvisoryResponse | null>(null);
+  const [aiForecast, setAiForecast] = useState<ForecastResponse | null>(null);
   const [loadingData, setLoadingData] = useState<boolean>(false);
 
   useEffect(() => {
@@ -55,15 +60,19 @@ export const EnvironmentalCommandCentrePage: React.FC = () => {
 
     async function loadDashboardData() {
       try {
-        const [hData, cData, tData] = await Promise.all([
+        const [hData, cData, tData, advData, fData] = await Promise.all([
           environmentalApiClient.fetchHotspots(pollutant, selectedPeriod!.year, selectedPeriod!.month, 8),
           environmentalApiClient.fetchCorridorComparison(pollutant, selectedPeriod!.year, selectedPeriod!.month),
           environmentalApiClient.fetchTimeseries(undefined, 28.6676, 77.2431, pollutant),
+          environmentalApiClient.fetchAiAdvisory(pollutant, undefined, '24_hour_mean', 'observed_ground'),
+          environmentalApiClient.fetchAiForecast(pollutant as 'PM2.5' | 'PM10', undefined, 6),
         ]);
         if (isMounted) {
           setHotspots(hData.items);
           setCorridorComparison(cData);
           setTimeseries(tData.timeseries);
+          setAiAdvisory(advData);
+          setAiForecast(fData);
         }
       } catch (err) {
         console.error('Failed to load command centre data', err);
@@ -241,6 +250,75 @@ export const EnvironmentalCommandCentrePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Environmental AI Public Safety Advisory & Forecast Summary Banner */}
+      {aiAdvisory && (
+        <div className="bg-white rounded-xl border border-[#DCE3EA] p-5 shadow-xs space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-sky-50 text-sky-700 border border-sky-200">
+                <Brain className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-xs font-bold font-mono text-[#17365D] uppercase tracking-wider">
+                  Environmental AI Public Safety Advisory & Statistical Forecast
+                </h2>
+                <p className="text-[11px] font-mono text-slate-500">
+                  Statutory CPCB NAAQS 2009 Reference · Snapshot Timestamp: {aiAdvisory.data_timestamp}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span
+                className="px-2.5 py-1 rounded text-xs font-bold text-white font-mono shadow-xs"
+                style={{ backgroundColor: aiAdvisory.color }}
+              >
+                {aiAdvisory.cpcb_category} (Risk: {aiAdvisory.risk_level.toUpperCase()})
+              </span>
+
+              <button
+                onClick={() => navigate('/explorer')}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#17365D] hover:bg-[#122b4a] text-white text-xs font-mono font-medium transition-colors shadow-xs"
+              >
+                <span>Detailed AI Analytics</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+            <div className="md:col-span-2 space-y-1">
+              <div className="text-[11px] text-slate-500 font-semibold uppercase">General Population Guidance</div>
+              <p className="text-slate-700 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                {aiAdvisory.general_public_advisory}
+              </p>
+            </div>
+
+            {aiForecast && aiForecast.forecast_points.length > 0 && (
+              <div className="space-y-1">
+                <div className="text-[11px] text-slate-500 font-semibold uppercase">
+                  6-Month Statistical Forecast ({aiForecast.pollutant})
+                </div>
+                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-slate-600 font-bold">{aiForecast.forecast_points[0].period} (Next Mo):</span>
+                    <span className="text-[#17365D] font-bold text-sm">
+                      {aiForecast.forecast_points[0].forecast_value} {aiForecast.unit}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    Model: {aiForecast.selected_model} (Held-out RMSE: {aiForecast.evaluation.rmse} {aiForecast.unit})
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    *Monthly gridded estimate; not next-day forecast.
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main Charts & Analytics Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

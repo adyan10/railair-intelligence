@@ -1,12 +1,14 @@
-import React from 'react';
-import { Wind, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Wind, AlertCircle, Brain } from 'lucide-react';
 import { useEnvironmental } from '../context/EnvironmentalContext';
 import { EnvironmentalExplorerMap } from '../components/environmental/EnvironmentalExplorerMap';
 import { HistoricalTimeline } from '../components/environmental/HistoricalTimeline';
 import { LocationInspectorPanel } from '../components/environmental/LocationInspectorPanel';
+import { EnvironmentalAiModal } from '../components/environmental/EnvironmentalAiModal';
 
 export const EnvironmentalExplorerPage: React.FC = () => {
   const { pollutant, setPollutant, selectedPeriod, gridData, error } = useEnvironmental();
+  const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
 
   return (
     <div className="relative w-full h-full bg-slate-950 overflow-hidden flex flex-col">
@@ -47,6 +49,19 @@ export const EnvironmentalExplorerPage: React.FC = () => {
               </button>
             ))}
           </div>
+
+          <span className="text-slate-600 hidden md:inline">|</span>
+
+          {/* AI Engine & Public Safety Advisory Trigger */}
+          <button
+            onClick={() => setIsAiModalOpen(true)}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-sky-950/90 border border-sky-600/70 text-sky-300 hover:bg-sky-900 hover:text-white transition-all text-[11px] shadow-sm font-semibold"
+            title="Open Environmental AI Engine, Statistical Forecasting & Public Health Advisory"
+          >
+            <Brain className="w-3.5 h-3.5 text-sky-400" />
+            <span className="hidden sm:inline">AI Advisory & Forecast</span>
+            <span className="sm:hidden">AI</span>
+          </button>
         </div>
 
         {/* Right Floating Summary Pill */}
@@ -100,6 +115,14 @@ export const EnvironmentalExplorerPage: React.FC = () => {
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[92%] sm:w-[85%] md:w-[75%] lg:w-[60%] z-20">
         <HistoricalTimeline />
       </div>
+
+      {/* Environmental AI Modal */}
+      <EnvironmentalAiModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        activePollutant={pollutant}
+        onPollutantChange={setPollutant}
+      />
     </div>
   );
 };
