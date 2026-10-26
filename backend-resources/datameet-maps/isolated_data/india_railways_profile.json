@@ -1,0 +1,31 @@
+{
+  "entity": "Indian Railways (National Level)",
+  "country": "India",
+  "authority": "Ministry of Railways, Government of India",
+  "network_statistics": {
+    "total_route_km": 68043,
+    "total_running_track_km": 102831,
+    "electrification_status": "Over 94% electrified (towards Mission 100% Electrification)",
+    "daily_passengers_approx": "23+ million",
+    "daily_trains_approx": "13,500+ passenger trains, 9,000+ freight trains",
+    "total_stations_approx": 7325
+  },
+  "organizational_structure": {
+    "total_zones": 18,
+    "total_divisions": 70,
+    "zones_table_source": "isolated_data/india_railway_zones_and_divisions.csv"
+  },
+  "high_density_corridors": [
+    "Golden Quadrilateral (Connecting Delhi, Mumbai, Chennai, Howrah/Kolkata)",
+    "Golden Diagonal (Connecting Delhi-Chennai, Howrah-Mumbai)",
+    "Eastern Dedicated Freight Corridor (EDFC: Ludhiana to Dankuni via UP)",
+    "Western Dedicated Freight Corridor (WDFC: Dadri to JNPT Mumbai)"
+  ],
+  "geospatial_resources": {
+    "datameet_railways_github": "https://github.com/datameet/railways",
+    "stations_geojson": "https://raw.githubusercontent.com/datameet/railways/master/stations.json",
+    "train_routes_geojson": "https://raw.githubusercontent.com/datameet/railways/master/trains.json",
+    "national_boundary_layer": "Country/india-composite.geojson",
+    "simplified_land_boundary": "Country/india-land-simplified.geojson"
+  }
+}

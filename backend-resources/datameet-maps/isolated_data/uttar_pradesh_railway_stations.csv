@@ -1,0 +1,71 @@
+code,name,zone,division,district,latitude,longitude,category
+CNB,Kanpur Central,NCR,Prayagraj,Kanpur Nagar,26.4539,80.3512,NSG-2 Non-Suburban Grade
+DDU,Pt. Deen Dayal Upadhyaya Jn,ECR,Pt. Deen Dayal Upadhyaya,Chandauli,25.2781,83.1193,NSG-2 Non-Suburban Grade
+LKO,Lucknow Charbagh (NR),NR,Lucknow,Lucknow,26.8315,80.9229,NSG-2 Non-Suburban Grade
+LJN,Lucknow Junction (NER),NER,Lucknow,Lucknow,26.8322,80.9208,NSG-2 Non-Suburban Grade
+PRYJ,Prayagraj Junction,NCR,Prayagraj,Prayagraj,25.4449,81.8340,NSG-2 Non-Suburban Grade
+BSB,Varanasi Junction,NR,Lucknow,Varanasi,25.3283,82.9867,NSG-2 Non-Suburban Grade
+BSBS,Banaras,NER,Varanasi,Varanasi,25.3090,82.9644,NSG-3 Non-Suburban Grade
+GKP,Gorakhpur Junction,NER,Lucknow,Gorakhpur,26.7593,83.3815,NSG-2 Non-Suburban Grade
+VGLJ,Virangana Lakshmibai Jhansi,NCR,Jhansi,Jhansi,25.4484,78.5528,NSG-2 Non-Suburban Grade
+AGC,Agra Cantt,NCR,Agra,Agra,27.1583,77.9906,NSG-2 Non-Suburban Grade
+AF,Agra Fort,NCR,Agra,Agra,27.1824,78.0163,NSG-3 Non-Suburban Grade
+MTJ,Mathura Junction,NCR,Agra,Mathura,27.4924,77.6737,NSG-2 Non-Suburban Grade
+GZB,Ghaziabad Junction,NR,Delhi,Ghaziabad,28.6657,77.4326,NSG-3 Non-Suburban Grade
+MB,Moradabad Junction,NR,Moradabad,Moradabad,28.8315,78.7764,NSG-2 Non-Suburban Grade
+BE,Bareilly Junction,NR,Moradabad,Bareilly,28.3414,79.4189,NSG-2 Non-Suburban Grade
+BC,Bareilly City,NER,Izzatnagar,Bareilly,28.3712,79.4215,NSG-4 Non-Suburban Grade
+IZN,Izzatnagar,NER,Izzatnagar,Bareilly,28.4063,79.4385,NSG-4 Non-Suburban Grade
+ALJN,Aligarh Junction,NCR,Prayagraj,Aligarh,27.8974,78.0772,NSG-2 Non-Suburban Grade
+MTC,Meerut City,NR,Delhi,Meerut,28.9744,77.6885,NSG-3 Non-Suburban Grade
+MUT,Meerut Cantt,NR,Delhi,Meerut,29.0125,77.7120,NSG-4 Non-Suburban Grade
+SRE,Saharanpur Junction,NR,Ambala,Saharanpur,29.9641,77.5458,NSG-3 Non-Suburban Grade
+AY,Ayodhya Dham Junction,NR,Lucknow,Ayodhya,26.7922,82.1998,NSG-2 Non-Suburban Grade
+AYC,Ayodhya Cantt,NR,Lucknow,Ayodhya,26.7725,82.1386,NSG-3 Non-Suburban Grade
+FD,Faizabad Junction,NR,Lucknow,Ayodhya,26.7731,82.1402,NSG-3 Non-Suburban Grade
+GD,Gonda Junction,NER,Lucknow,Gonda,27.1306,81.9619,NSG-3 Non-Suburban Grade
+BST,Basti,NER,Lucknow,Basti,26.7997,82.7383,NSG-3 Non-Suburban Grade
+DEOS,Deoria Sadar,NER,Varanasi,Deoria,26.5077,83.7820,NSG-3 Non-Suburban Grade
+MAU,Mau Junction,NER,Varanasi,Mau,25.9514,83.5606,NSG-3 Non-Suburban Grade
+BUI,Ballia,NER,Varanasi,Ballia,25.7597,84.1503,NSG-3 Non-Suburban Grade
+GCT,Ghazipur City,NER,Varanasi,Ghazipur,25.5878,83.5786,NSG-3 Non-Suburban Grade
+JNU,Jaunpur Junction,NR,Lucknow,Jaunpur,25.7335,82.6836,NSG-3 Non-Suburban Grade
+SLN,Sultanpur Junction,NR,Lucknow,Sultanpur,26.2648,82.0727,NSG-3 Non-Suburban Grade
+PBH,Pratapgarh Junction (Maa Belha Devi),NR,Lucknow,Pratapgarh,25.9238,81.9964,NSG-3 Non-Suburban Grade
+RBL,Rae Bareli Junction,NR,Lucknow,Rae Bareli,26.2236,81.2403,NSG-3 Non-Suburban Grade
+AME,Amethi,NR,Lucknow,Amethi,26.1558,81.8152,NSG-4 Non-Suburban Grade
+ON,Unnao Junction,NR,Lucknow,Unnao,26.5458,80.4936,NSG-3 Non-Suburban Grade
+FTP,Fatehpur,NCR,Prayagraj,Fatehpur,25.9267,80.8142,NSG-3 Non-Suburban Grade
+SPN,Shahjahanpur,NR,Moradabad,Shahjahanpur,27.8804,79.9122,NSG-3 Non-Suburban Grade
+HRI,Hardoi,NR,Moradabad,Hardoi,27.3947,80.1311,NSG-3 Non-Suburban Grade
+STP,Sitapur Junction,NER,Lucknow,Sitapur,27.5684,80.6826,NSG-3 Non-Suburban Grade
+LMP,Lakhimpur,NER,Lucknow,Lakhimpur Kheri,27.9478,80.7786,NSG-4 Non-Suburban Grade
+PBE,Pilibhit Junction,NER,Izzatnagar,Pilibhit,28.6150,79.8139,NSG-3 Non-Suburban Grade
+BNDA,Banda Junction,NCR,Jhansi,Banda,25.4756,80.3344,NSG-3 Non-Suburban Grade
+MBA,Mahoba Junction,NCR,Jhansi,Mahoba,25.3069,79.8491,NSG-3 Non-Suburban Grade
+ORAI,Orai,NCR,Jhansi,Jalaun,25.9897,79.4528,NSG-3 Non-Suburban Grade
+ETW,Etawah Junction,NCR,Prayagraj,Etawah,26.7761,79.0264,NSG-3 Non-Suburban Grade
+MNQ,Mainpuri,NCR,Prayagraj,Mainpuri,27.2281,79.0306,NSG-4 Non-Suburban Grade
+FZD,Firozabad,NCR,Prayagraj,Firozabad,27.1539,78.3958,NSG-3 Non-Suburban Grade
+SKB,Shikohabad Junction,NCR,Prayagraj,Firozabad,27.1067,78.5842,NSG-3 Non-Suburban Grade
+TDL,Tundla Junction,NCR,Prayagraj,Firozabad,27.2078,78.2417,NSG-3 Non-Suburban Grade
+HRS,Hathras Junction,NCR,Prayagraj,Hathras,27.5956,78.0567,NSG-4 Non-Suburban Grade
+KSJ,Kasganj Junction,NER,Izzatnagar,Kasganj,27.8081,78.6475,NSG-3 Non-Suburban Grade
+FBD,Farrukhabad Junction,NER,Izzatnagar,Farrukhabad,27.3917,79.5806,NSG-3 Non-Suburban Grade
+KJN,Kannauj,NER,Izzatnagar,Kannauj,27.0514,79.9197,NSG-4 Non-Suburban Grade
+CH,Chandausi Junction,NR,Moradabad,Sambhal,28.4550,78.7758,NSG-3 Non-Suburban Grade
+HPU,Hapur Junction,NR,Moradabad,Hapur,28.7306,77.7781,NSG-3 Non-Suburban Grade
+MBKD,Maa Barahi Devi Dham (Dandupur),NR,Lucknow,Pratapgarh,25.8642,82.1120,NSG-5 Non-Suburban Grade
+MBDD,Maa Bela Devi Dham Pratapgarh,NR,Lucknow,Pratapgarh,25.9238,81.9964,NSG-3 Non-Suburban Grade
+BTU,Baraut,NR,Delhi,Baghpat,29.0969,77.2730,NSG-4 Non-Suburban Grade
+BLP,Balrampur,NER,Lucknow,Balrampur,27.4300,82.1800,NSG-4 Non-Suburban Grade
+BRK,Bahraich,NER,Lucknow,Bahraich,27.5700,81.6000,NSG-4 Non-Suburban Grade
+SVPR,Shivpur,NR,Lucknow,Varanasi,25.3610,82.9540,NSG-4 Non-Suburban Grade
+CAR,Chunar Junction,NCR,Prayagraj,Mirzapur,25.1272,82.8767,NSG-3 Non-Suburban Grade
+MZP,Mirzapur,NCR,Prayagraj,Mirzapur,25.1464,82.5694,NSG-3 Non-Suburban Grade
+CPU,Chopan,ECR,Dhanbad,Sonbhadra,24.5200,83.0300,NSG-4 Non-Suburban Grade
+RNQ,Renukoot,ECR,Dhanbad,Sonbhadra,24.2189,83.0317,NSG-4 Non-Suburban Grade
+ARJ,Aunrihar Junction,NER,Varanasi,Ghazipur,25.5414,83.1867,NSG-3 Non-Suburban Grade
+BHTN,Bhatni Junction,NER,Varanasi,Deoria,26.2500,83.9700,NSG-3 Non-Suburban Grade
+AMRO,Amroha,NR,Moradabad,Amroha,28.9042,78.4683,NSG-3 Non-Suburban Grade
+HJM,Heerapur,NCR,Prayagraj,Varanasi,25.3120,82.9230,NSG-5 Non-Suburban Grade

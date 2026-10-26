@@ -1,0 +1,47 @@
+{
+  "entity": "India",
+  "level": "National",
+  "iso_code": "IND",
+  "overview": {
+    "capital": "New Delhi",
+    "total_states_and_uts": 36,
+    "census_year_analyzed": [2001, 2011],
+    "geographical_extent": {
+      "latitude_range": "8.068 to 37.087 N",
+      "longitude_range": "68.199 to 97.407 E"
+    }
+  },
+  "demographics": {
+    "sex_ratio": {
+      "census_2001": 933,
+      "census_2011": 940,
+      "change": 7
+    },
+    "national_population_density_2011": 382,
+    "total_districts_2011": 640
+  },
+  "political_and_electoral_structure": {
+    "parliamentary_constituencies_lok_sabha": {
+      "total_seats": 543,
+      "dataset_source": "website/docs/data/csv/pc_14.csv",
+      "geospatial_source": "website/docs/data/geojson/pc_14.geojson"
+    },
+    "assembly_constituencies_vidhan_sabha": {
+      "total_seats": 4120,
+      "geospatial_source": "website/docs/data/geojson/ac.geojson"
+    }
+  },
+  "geospatial_files": {
+    "composite_boundary": "Country/india-composite.geojson",
+    "osm_boundary": "Country/india-osm.geojson",
+    "survey_of_india_boundary": "Country/india-soi.geojson",
+    "simplified_land_boundary": "Country/india-land-simplified.geojson",
+    "states_boundary_collection": "website/docs/data/geojson/states.geojson"
+  },
+  "tabular_files": {
+    "census_sex_ratio_summary": "isolated_data/india_census.csv",
+    "all_states_census": "website/docs/data/csv/statesCensus.csv",
+    "all_districts_census": "website/docs/data/csv/dists.csv",
+    "parliamentary_constituencies_results_2014": "website/docs/data/csv/pc_14.csv"
+  }
+}

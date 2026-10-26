@@ -1,0 +1,44 @@
+{
+  "inventory_datasets_count": 4,
+  "ground_observations": {
+    "total_rows_parsed": 3710,
+    "valid_values": 3434,
+    "null_values_preserved": 276,
+    "null_percentage": 7.44,
+    "unique_cpcb_stations": 530,
+    "corridor_stations_count": 80,
+    "corridor_readings_count": 560
+  },
+  "gridded_corridor_estimates": {
+    "total_cells_extracted": 9216,
+    "pm25_count": 4608,
+    "pm10_count": 4608,
+    "years_covered": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ]
+  },
+  "meteorology_and_gases": {
+    "total_variables_parsed": 159129,
+    "variables": [
+      "CO",
+      "DewPoint",
+      "HCHO",
+      "NO2",
+      "O3",
+      "SO2",
+      "Temperature",
+      "Wind_U",
+      "Wind_V"
+    ],
+    "years_covered": [
+      2023,
+      2024,
+      2025
+    ]
+  }
+}

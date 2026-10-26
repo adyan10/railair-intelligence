@@ -1,0 +1,15 @@
+name,system,latitude,longitude,opened,source,nearest_ir_code,nearest_ir_name,nearest_ir_km
+New Ashok Nagar,RRTS,28.5907336,77.302104,2025-01-05,https://en.wikipedia.org/wiki/New_Ashok_Nagar_RRTS_station,NZM,DELHI H NIZAMUDDIN,4.69
+Sahibabad,RRTS,28.6675396,77.365493,,https://en.wikipedia.org/wiki/Sahibabad_RRTS_station,SBB,SAHIBABAD,0.73
+Guldhar,RRTS,28.69956,77.44582,,https://en.wikipedia.org/wiki/Guldhar_RRTS_station,GUH,GULDHAR,1.08
+Duhai,RRTS,28.72734,77.47179,,https://en.wikipedia.org/wiki/Duhai_RRTS_station,DXH,DUHAI,0.9
+Duhai Depot,RRTS,28.74208,77.46794,,https://en.wikipedia.org/wiki/Duhai_Depot_RRTS_station,DXH,DUHAI,1.79
+Murad Nagar,RRTS,28.77046,77.51076,2024-03-07,https://en.wikipedia.org/wiki/Murad_Nagar_RRTS_station,MUD,MURADNAGAR,1.33
+Modinagar South,RRTS,28.81754,77.5566,,https://en.wikipedia.org/wiki/Modinagar_South_RRTS_station,MDNR,MODINAGAR,1.87
+Modinagar North,RRTS,28.84373,77.58345,,https://en.wikipedia.org/wiki/Modinagar_North_RRTS_station,MDNR,MODINAGAR,2.1
+Meerut South,RRTS,28.90388,77.63203,,https://en.wikipedia.org/wiki/Meerut_South_RRTS_station,MUZ,MOHIUDDINPUR,2.29
+Shatabdi Nagar,RRTS,28.94761,77.67359,2026-02-22,https://en.wikipedia.org/wiki/Shatabdi_Nagar_RRTS_station,MTC,MEERUT CITY,3.34
+Brahmapuri,Meerut Metro,28.96035,77.68481,,https://en.wikipedia.org/wiki/Brahmapuri_metro_station,MTC,MEERUT CITY,2.14
+Begumpul,RRTS,28.99672,77.70571,2026-02-22,https://en.wikipedia.org/wiki/Begumpul_RRTS_station,MUT,MEERUT CANT,2.82
+Meerut North,Meerut Metro,29.05349,77.70814,,https://en.wikipedia.org/wiki/Meerut_North_metro_station,PQY,PABLI KHAS,0.99
+Modipuram,RRTS,29.07214,77.7088,2026-02-22,https://en.wikipedia.org/wiki/Modipuram_RRTS_station,PQY,PABLI KHAS,2.06

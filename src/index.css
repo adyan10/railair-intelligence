@@ -1,0 +1,190 @@
+@import 'leaflet/dist/leaflet.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #F5F6F8;
+    color: #192734;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #F1F5F9; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+}
+
+@layer components {
+  .leaflet-container {
+    height: 100%;
+    width: 100%;
+    border-radius: 0.5rem;
+    background: #F8FAFC;
+  }
+  .leaflet-popup-content-wrapper {
+    background: #FFFFFF;
+    color: #192734;
+    border: 1px solid #DCE3EA;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  }
+  .leaflet-popup-tip { background: #FFFFFF; }
+  .leaflet-popup-close-button { color: #64748B !important; }
+
+  /* Custom Leaflet Tooltip Styling matching Claude prototype */
+  .leaflet-tooltip.station-label {
+    background-color: #FFFFFF !important;
+    border: 1px solid #DCE3EA !important;
+    color: #17365D !important;
+    font-family: 'JetBrains Mono', ui-monospace, monospace !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 3px 7px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+    border-radius: 3px !important;
+  }
+  .leaflet-tooltip-top:before, .leaflet-tooltip-bottom:before,
+  .leaflet-tooltip-left:before, .leaflet-tooltip-right:before {
+    display: none !important;
+  }
+  .leaflet-interactive {
+    transition: fill 0.5s, stroke-width 0.3s;
+  }
+  .bar {
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s, background-color 0.4s;
+  }
+
+  .chart-tooltip {
+    background: #FFFFFF !important;
+    border: 1px solid #DCE3EA !important;
+    border-radius: 8px !important;
+    color: #192734 !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+  }
+
+  .kpi-card {
+    @apply bg-white rounded-xl border border-[#DCE3EA] p-4 shadow-xs;
+  }
+  .panel {
+    @apply bg-white rounded-xl border border-[#DCE3EA] shadow-xs;
+  }
+  .badge-simulated {
+    @apply inline-flex items-center gap-1 text-[11px] font-mono font-medium px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-800;
+  }
+  .badge-pm25 {
+    @apply text-xs font-mono font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200;
+  }
+  .badge-pm10 {
+    @apply text-xs font-mono font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200;
+  }
+  .btn-primary {
+    @apply bg-[#17365D] hover:bg-[#122b4a] text-white font-medium px-4 py-2 rounded-md transition-all text-sm shadow-xs active:scale-95;
+  }
+  .btn-secondary {
+    @apply bg-white hover:bg-slate-50 text-[#17365D] font-medium px-4 py-2 rounded-md transition-all text-sm border border-[#DCE3EA] shadow-2xs;
+  }
+  .btn-ghost {
+    @apply hover:bg-slate-100 text-slate-700 font-medium px-3 py-1.5 rounded-md transition-colors text-sm;
+  }
+  .input-field {
+    @apply bg-white border border-[#DCE3EA] text-slate-800 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#17365D] transition-colors;
+  }
+  .section-header {
+    @apply text-xs font-mono font-semibold uppercase tracking-wider text-slate-500 mb-3;
+  }
+}
+
+@layer utilities {
+  .bg-grid-canvas {
+    background-image: linear-gradient(#17365D 1px, transparent 1px), linear-gradient(90deg, #17365D 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(23, 54, 93, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(23, 54, 93, 0.04) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+}
+
+/* =========================================================================
+   Hero Locomotive (WAP-7) Reveal Animations (matching Claude reference)
+   ========================================================================= */
+@keyframes pointPulse {
+  0% { transform: scale(0); opacity: 0; }
+  40% { transform: scale(1.6); opacity: 1; }
+  70% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 0.4; }
+}
+.anim-origin-point {
+  transform-origin: 35px 360px;
+  animation: pointPulse 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes railGuideGrow {
+  0% { stroke-dashoffset: 760; opacity: 0; }
+  30% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0.8; }
+}
+.anim-guideline {
+  stroke-dasharray: 760;
+  stroke-dashoffset: 760;
+  animation: railGuideGrow 1.2s 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes drawLocoStrokes {
+  0% { stroke-dashoffset: 2400; opacity: 0; }
+  15% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+.anim-loco-contour {
+  stroke-dasharray: 2400;
+  stroke-dashoffset: 2400;
+  animation: drawLocoStrokes 2.2s 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes resolveLocoFills {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.anim-loco-fill {
+  opacity: 0;
+  animation: resolveLocoFills 0.9s 2.0s ease-out forwards;
+}
+
+@keyframes revealIndiaMap {
+  0% { opacity: 0; transform: translateX(8px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.anim-map-reveal {
+  opacity: 0;
+  animation: revealIndiaMap 1.2s 2.2s ease-out forwards;
+}
+
+@keyframes revealHeroContent {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.anim-content-reveal {
+  opacity: 0;
+  animation: revealHeroContent 0.8s 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-origin-point,
+  .anim-guideline,
+  .anim-loco-contour,
+  .anim-loco-fill,
+  .anim-map-reveal,
+  .anim-content-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+    stroke-dashoffset: 0 !important;
+    transform: none !important;
+  }
+}
