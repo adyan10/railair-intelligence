@@ -521,7 +521,7 @@ class EnvironmentalService:
                             g.quality_status,
                             g.canonical_station_id,
                             s.ir_code as canonical_ir_code,
-                            ROUND(ST_Distance(g.geom::geography, s.geom::geography) / 1000.0, 2) as distance_km,
+                            ROUND((ST_Distance(g.geom::geography, s.geom::geography) / 1000.0)::numeric, 2)::float as distance_km,
                             g.dataset_id
                         FROM environmental_ground_observations g
                         LEFT JOIN stations s ON g.canonical_station_id = s.id
@@ -534,13 +534,20 @@ class EnvironmentalService:
 
                     items = []
                     for r in rows:
+                        lat_val = float(r[4])
+                        lon_val = float(r[5])
+                        city_val = r[2].lower()
+                        in_corridor = (
+                            city_val in CORRIDOR_CITIES
+                            or (CORRIDOR_BBOX["min_lat"] <= lat_val <= CORRIDOR_BBOX["max_lat"] and CORRIDOR_BBOX["min_lon"] <= lon_val <= CORRIDOR_BBOX["max_lon"])
+                        )
                         items.append({
                             "id": r[0],
                             "station_name": r[1],
                             "city": r[2],
                             "state": r[3],
-                            "latitude": float(r[4]),
-                            "longitude": float(r[5]),
+                            "latitude": lat_val,
+                            "longitude": lon_val,
                             "pollutant": r[6],
                             "value_avg": float(r[7]) if r[7] is not None else None,
                             "value_min": float(r[8]) if r[8] is not None else None,
@@ -549,7 +556,7 @@ class EnvironmentalService:
                             "observed_at": r[11],
                             "acquisition_at": r[12],
                             "quality_status": r[13],
-                            "is_corridor": True,
+                            "is_corridor": in_corridor,
                             "nearest_canonical_station_id": r[14],
                             "canonical_ir_code": r[15],
                             "distance_to_canonical_km": float(r[16]) if r[16] is not None else None,
