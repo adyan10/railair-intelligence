@@ -130,8 +130,8 @@ export function JourneyPage() {
   return (
     <div className="p-5 space-y-5 max-w-4xl mx-auto">
       <div>
-        <h2 className="text-lg font-semibold text-white">Journey Exposure Planner</h2>
-        <p className="text-xs text-slate-400 mt-0.5">
+        <h2 className="text-lg font-semibold text-rail-navy">Journey Exposure Planner</h2>
+        <p className="text-xs text-rail-muted mt-0.5">
           Estimate a concentration-time exposure proxy based on historical train schedules along the corridor.
         </p>
       </div>

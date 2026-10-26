@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS provenance_records (
 -- 3. Stations Table
 -- Core station metadata with PostGIS Point geometry (EPSG:4326)
 CREATE TABLE IF NOT EXISTS stations (
-    id VARCHAR(10) PRIMARY KEY,                         -- Standard Railway Station Code (e.g. 'NDLS', 'MRT')
+    id VARCHAR(10) PRIMARY KEY,                         -- Canonical RailAir System Station ID (e.g. 'NDLS', 'SAH', 'DSO', 'MRT')
+    ir_code VARCHAR(10),                                -- Official Indian Railways CRIS Station Code (e.g. 'NDLS', 'SBB', 'DSA', 'MTC')
     name VARCHAR(100) NOT NULL,
     short_name VARCHAR(50) NOT NULL,
     station_type VARCHAR(20) NOT NULL CHECK (station_type IN ('major', 'halt', 'junction', 'terminal')),
@@ -107,15 +108,15 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Seed Stations
-INSERT INTO stations (id, name, short_name, station_type, distance_from_origin_km, platforms, division, latitude, longitude, provenance_id)
+INSERT INTO stations (id, ir_code, name, short_name, station_type, distance_from_origin_km, platforms, division, latitude, longitude, provenance_id)
 VALUES
-    ('MRT',  'Meerut City Junction',      'Meerut',    'major',    0.0,  '5 Platforms',  'Delhi Division · Northern Railway',          28.984500, 77.706400, 1),
-    ('MMU',  'Modinagar',                 'Modinagar', 'halt',     22.0, '2 Platforms',  'Delhi Division · Northern Railway',          28.832400, 77.580300, 1),
-    ('MNR',  'Muradnagar',                'Muradnagar','halt',     38.0, '2 Platforms',  'Delhi Division · Northern Railway',          28.776200, 77.509600, 1),
-    ('GZB',  'Ghaziabad Junction',        'Ghaziabad', 'junction', 56.0, '6 Platforms',  'Major Intercity Junction · Northern Railway',28.659500, 77.424600, 1),
-    ('SAH',  'Sahibabad Junction',        'Sahibabad', 'junction', 65.0, '4 Platforms',  'Delhi Division · Northern Railway',          28.683800, 77.361300, 1),
-    ('DSO',  'Delhi Shahdara Junction',   'Shahdara',  'halt',     72.0, '4 Platforms',  'Delhi Division · Northern Railway',          28.673000, 77.297900, 1),
-    ('NDLS', 'New Delhi Railway Station', 'New Delhi', 'terminal', 83.0, '16 Platforms', 'Central Mega Terminal · Northern Railway',   28.641900, 77.219400, 1)
+    ('MRT',  'MTC',  'Meerut City Junction',      'Meerut',    'major',    0.0,  '5 Platforms',  'Delhi Division · Northern Railway',          28.984500, 77.706400, 1),
+    ('MMU',  'MDNR', 'Modinagar',                 'Modinagar', 'halt',     22.0, '2 Platforms',  'Delhi Division · Northern Railway',          28.832400, 77.580300, 1),
+    ('MNR',  'MUD',  'Muradnagar',                'Muradnagar','halt',     38.0, '2 Platforms',  'Delhi Division · Northern Railway',          28.776200, 77.509600, 1),
+    ('GZB',  'GZB',  'Ghaziabad Junction',        'Ghaziabad', 'junction', 56.0, '6 Platforms',  'Major Intercity Junction · Northern Railway',28.659500, 77.424600, 1),
+    ('SAH',  'SBB',  'Sahibabad Junction',        'Sahibabad', 'junction', 65.0, '4 Platforms',  'Delhi Division · Northern Railway',          28.683800, 77.361300, 1),
+    ('DSO',  'DSA',  'Delhi Shahdara Junction',   'Shahdara',  'halt',     72.0, '4 Platforms',  'Delhi Division · Northern Railway',          28.673000, 77.297900, 1),
+    ('NDLS', 'NDLS', 'New Delhi Railway Station', 'New Delhi', 'terminal', 83.0, '16 Platforms', 'Central Mega Terminal · Northern Railway',   28.641900, 77.219400, 1)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Observations

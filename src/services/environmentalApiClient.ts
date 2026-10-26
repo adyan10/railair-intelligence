@@ -24,20 +24,21 @@ import type {
   RegionalSummary,
   GridCellRecord,
   TimeSeriesPoint,
+  CanonicalStation,
 } from '../types/environmental';
 import { interpolateRampColorHex } from './rasterInterpolation';
 
 const API_BASE = '/api/v1/environmental';
 
 // Canonical corridor stations
-export const CANONICAL_CORRIDOR_STATIONS = [
-  { id: 'MRT', name: 'Meerut City Junction', lat: 28.9845, lng: 77.7064, city: 'Meerut' },
-  { id: 'MMU', name: 'Modinagar', lat: 28.8324, lng: 77.5803, city: 'Modinagar' },
-  { id: 'MNR', name: 'Muradnagar', lat: 28.7772, lng: 77.5028, city: 'Muradnagar' },
-  { id: 'GZB', name: 'Ghaziabad Junction', lat: 28.6656, lng: 77.4312, city: 'Ghaziabad' },
-  { id: 'SAH', name: 'Sahibabad Junction', lat: 28.6728, lng: 77.3625, city: 'Sahibabad' },
-  { id: 'DSO', name: 'Delhi Shahdara Junction', lat: 28.6722, lng: 77.2947, city: 'Delhi' },
-  { id: 'NDLS', name: 'New Delhi', lat: 28.6429, lng: 77.2195, city: 'Delhi' },
+export const CANONICAL_CORRIDOR_STATIONS: CanonicalStation[] = [
+  { id: 'MRT', ir_code: 'MTC', name: 'Meerut City Junction', lat: 28.9845, lng: 77.7064, city: 'Meerut' },
+  { id: 'MMU', ir_code: 'MDNR', name: 'Modinagar', lat: 28.8324, lng: 77.5803, city: 'Modinagar' },
+  { id: 'MNR', ir_code: 'MUD', name: 'Muradnagar', lat: 28.7772, lng: 77.5028, city: 'Muradnagar' },
+  { id: 'GZB', ir_code: 'GZB', name: 'Ghaziabad Junction', lat: 28.6656, lng: 77.4312, city: 'Ghaziabad' },
+  { id: 'SAH', ir_code: 'SBB', name: 'Sahibabad Junction', lat: 28.6728, lng: 77.3625, city: 'Sahibabad' },
+  { id: 'DSO', ir_code: 'DSA', name: 'Delhi Shahdara Junction', lat: 28.6722, lng: 77.2947, city: 'Delhi' },
+  { id: 'NDLS', ir_code: 'NDLS', name: 'New Delhi', lat: 28.6429, lng: 77.2195, city: 'Delhi' },
 ];
 
 export const CORRIDOR_TRACK_COORDINATES: [number, number][] = [
@@ -443,6 +444,7 @@ export class EnvironmentalApiClient {
       }
       return {
         station_id: st.id,
+        ir_code: st.ir_code,
         station_name: st.name,
         city: st.city,
         latitude: st.lat,

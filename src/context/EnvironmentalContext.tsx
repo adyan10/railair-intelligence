@@ -6,8 +6,13 @@ import type {
   GridCellRecord,
   LocationInspectionResponse,
   DatasetMetadata,
+  CanonicalStation,
 } from '../types/environmental';
-import { environmentalApiClient } from '../services/environmentalApiClient';
+import {
+  environmentalApiClient,
+  CANONICAL_CORRIDOR_STATIONS,
+  haversineKm,
+} from '../services/environmentalApiClient';
 import { getActiveDataset } from '../services/datasetMetadata';
 
 export interface EnvironmentalContextType {
@@ -27,8 +32,13 @@ export interface EnvironmentalContextType {
   gridData: EnvironmentalGridResponse | null;
   selectedCell: GridCellRecord | null;
   setSelectedCell: (cell: GridCellRecord | null) => void;
+  selectedStation: CanonicalStation | null;
+  setSelectedStation: (station: CanonicalStation | null) => void;
   inspectionData: LocationInspectionResponse | null;
-  inspectCoordinate: (lat: number, lon: number) => Promise<void>;
+  setInspectionData: (data: LocationInspectionResponse | null) => void;
+  clearInspection: () => void;
+  inspectCoordinate: (lat: number, lon: number, station?: CanonicalStation | null) => Promise<void>;
+  inspectStation: (station: CanonicalStation) => Promise<void>;
   layerOpacity: number;
   setLayerOpacity: (opacity: number) => void;
   showCorridor: boolean;
@@ -39,6 +49,8 @@ export interface EnvironmentalContextType {
   setShowHotspots: (show: boolean) => void;
   showDiagnosticGrid: boolean;
   setShowDiagnosticGrid: (show: boolean) => void;
+  showCpcbMonitors: boolean;
+  setShowCpcbMonitors: (show: boolean) => void;
   showCoverageBoundary: boolean;
   setShowCoverageBoundary: (show: boolean) => void;
   currentZoom: number;
@@ -67,6 +79,7 @@ export const EnvironmentalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [gridData, setGridData] = useState<EnvironmentalGridResponse | null>(null);
   const [selectedCell, setSelectedCell] = useState<GridCellRecord | null>(null);
+  const [selectedStation, setSelectedStation] = useState<CanonicalStation | null>(null);
   const [inspectionData, setInspectionData] = useState<LocationInspectionResponse | null>(null);
 
   const [layerOpacity, setLayerOpacity] = useState<number>(0.65);
@@ -204,11 +217,21 @@ export const EnvironmentalProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [isPlaying, playbackSpeed, periods.length]);
 
-  // Point Inspection
+  // Point or Station Inspection
   const inspectCoordinate = useCallback(
-    async (lat: number, lon: number) => {
+    async (lat: number, lon: number, station?: CanonicalStation | null) => {
       if (!selectedPeriod) return;
       try {
+        if (station !== undefined) {
+          setSelectedStation(station);
+        } else {
+          // If clicked elsewhere on the map, only select a station if within immediate vicinity (<= 100 meters)
+          const matched = CANONICAL_CORRIDOR_STATIONS.find(
+            (st) => haversineKm(lat, lon, st.lat, st.lng) <= 0.1
+          );
+          setSelectedStation(matched ?? null);
+        }
+
         const resp = await environmentalApiClient.fetchInspection(
           lat,
           lon,
@@ -228,12 +251,37 @@ export const EnvironmentalProvider: React.FC<{ children: React.ReactNode }> = ({
     [selectedPeriod, pollutant, gridData]
   );
 
-  // Auto-inspect coordinate from URL query params (?lat=...&lon=...) on first load
+  const inspectStation = useCallback(
+    async (station: CanonicalStation) => {
+      setSelectedStation(station);
+      await inspectCoordinate(station.lat, station.lng, station);
+    },
+    [inspectCoordinate]
+  );
+
+  const clearInspection = useCallback(() => {
+    setSelectedCell(null);
+    setSelectedStation(null);
+    setInspectionData(null);
+  }, []);
+
+  // Auto-inspect coordinate from URL query params (?lat=...&lon=... or ?station=...) on first load
   const hasAutoInspectedRef = useRef(false);
   useEffect(() => {
     if (hasAutoInspectedRef.current || !selectedPeriod || !gridData) return;
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
+      const stationParam = params.get('station');
+      if (stationParam) {
+        const found = CANONICAL_CORRIDOR_STATIONS.find(
+          (s) => s.id.toLowerCase() === stationParam.toLowerCase() || s.name.toLowerCase() === stationParam.toLowerCase()
+        );
+        if (found) {
+          hasAutoInspectedRef.current = true;
+          inspectStation(found);
+          return;
+        }
+      }
       const latParam = params.get('lat');
       const lonParam = params.get('lon');
       if (latParam && lonParam) {
@@ -241,7 +289,7 @@ export const EnvironmentalProvider: React.FC<{ children: React.ReactNode }> = ({
         inspectCoordinate(parseFloat(latParam), parseFloat(lonParam));
       }
     }
-  }, [selectedPeriod, gridData, inspectCoordinate]);
+  }, [selectedPeriod, gridData, inspectCoordinate, inspectStation]);
 
   const value: EnvironmentalContextType = {
     pollutant,
@@ -260,8 +308,13 @@ export const EnvironmentalProvider: React.FC<{ children: React.ReactNode }> = ({
     gridData,
     selectedCell,
     setSelectedCell,
+    selectedStation,
+    setSelectedStation,
     inspectionData,
+    setInspectionData,
+    clearInspection,
     inspectCoordinate,
+    inspectStation,
     layerOpacity,
     setLayerOpacity,
     showCorridor,

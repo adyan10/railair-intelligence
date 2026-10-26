@@ -4,39 +4,68 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'rec
 import { useEnvironmental } from '../../context/EnvironmentalContext';
 
 export const LocationInspectorPanel: React.FC = () => {
-  const { selectedCell, setSelectedCell, inspectionData, pollutant, selectedPeriod } = useEnvironmental();
+  const {
+    selectedCell,
+    selectedStation,
+    inspectionData,
+    clearInspection,
+    pollutant,
+    selectedPeriod,
+  } = useEnvironmental();
 
-  if (!selectedCell && !inspectionData) return null;
+  if (!selectedCell && !inspectionData && !selectedStation) return null;
 
   const timeseries = inspectionData?.timeseries ?? [];
   const displayVal = inspectionData?.value ?? selectedCell?.value;
   const displayCategory = inspectionData?.category ?? selectedCell?.category ?? 'Standard';
   const displayColor = inspectionData?.color ?? selectedCell?.color ?? '#10B981';
-  const queryLat = inspectionData?.query_latitude ?? selectedCell?.latitude;
-  const queryLon = inspectionData?.query_longitude ?? selectedCell?.longitude;
+  const queryLat = selectedStation ? selectedStation.lat : (inspectionData?.query_latitude ?? selectedCell?.latitude);
+  const queryLon = selectedStation ? selectedStation.lng : (inspectionData?.query_longitude ?? selectedCell?.longitude);
   const sourceGridId = inspectionData?.grid_id ?? selectedCell?.grid_id;
   const nearestStation = inspectionData?.nearest_station ?? selectedCell?.nearest_station;
   const distToStation = inspectionData?.distance_to_station_km ?? selectedCell?.distance_to_station_km;
   const distToNode = inspectionData?.distance_to_query_km;
 
   return (
-    <div className="absolute top-16 left-4 z-20 bg-slate-950/90 backdrop-blur-md p-4 rounded-xl border border-slate-700/80 shadow-2xl text-white font-mono text-xs w-80 sm:w-96 max-h-[80vh] overflow-y-auto animate-in fade-in slide-in-from-left-4 duration-150">
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="absolute top-16 left-4 z-20 bg-slate-950/90 backdrop-blur-md p-4 rounded-xl border border-slate-700/80 shadow-2xl text-white font-mono text-xs w-80 sm:w-96 max-h-[80vh] overflow-y-auto animate-in fade-in slide-in-from-left-4 duration-150"
+    >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-700/60 pb-2 mb-3">
         <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-sky-400" />
-          <span className="font-bold text-slate-100">POINT INSPECTION</span>
+          {selectedStation ? <Train className="w-4 h-4 text-sky-400" /> : <MapPin className="w-4 h-4 text-sky-400" />}
+          <span className="font-bold text-slate-100">
+            {selectedStation ? 'STATION INSPECTION' : 'POINT INSPECTION'}
+          </span>
         </div>
         <button
-          onClick={() => {
-            setSelectedCell(null);
+          onClick={(e) => {
+            e.stopPropagation();
+            clearInspection();
           }}
           className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           title="Close inspection panel"
+          aria-label="Close inspection panel"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Selected Station Banner if inspecting a canonical station */}
+      {selectedStation && (
+        <div className="mb-3 px-3 py-2 rounded-lg bg-sky-950/80 border border-sky-800/90 flex items-center justify-between text-[11px]">
+          <div>
+            <div className="font-bold text-sky-200">{selectedStation.name}</div>
+            <div className="text-[10px] text-slate-400 font-mono">
+              Station Code: {selectedStation.id} · {selectedStation.city}
+            </div>
+          </div>
+          <span className="text-[9px] font-bold text-sky-300 bg-sky-900/80 px-2 py-0.5 rounded border border-sky-700">
+            CORRIDOR NODE
+          </span>
+        </div>
+      )}
 
       {/* Point Concentration & AQI Category */}
       <div className="bg-slate-900/90 rounded-lg p-3 border border-slate-800 mb-3">
@@ -58,13 +87,13 @@ export const LocationInspectorPanel: React.FC = () => {
             <span className="text-xs font-normal text-slate-400">µg/m³</span>
           </div>
           <span className="text-[10px] text-sky-400 bg-sky-950/60 border border-sky-800/70 px-1.5 py-0.5 rounded font-mono">
-            {distToNode !== undefined && distToNode > 0 ? 'Interpolated Field' : 'Source Node'}
+            {selectedStation ? 'Station Location' : (distToNode !== undefined && distToNode > 0 ? 'Interpolated Field' : 'Source Node')}
           </span>
         </div>
 
         <div className="text-[10px] text-slate-400 mt-2 space-y-1 pt-1.5 border-t border-slate-800/60">
           <div className="flex justify-between">
-            <span>Query Coordinate:</span>
+            <span>{selectedStation ? 'Station Coordinate:' : 'Query Coordinate:'}</span>
             <span className="text-slate-300 font-mono">{queryLat?.toFixed(4)}°N, {queryLon?.toFixed(4)}°E</span>
           </div>
           {sourceGridId && (
@@ -86,21 +115,37 @@ export const LocationInspectorPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Proximity to Railway Corridor */}
-      {nearestStation && (
+      {/* Proximity / Station Node Card */}
+      {selectedStation ? (
         <div className="bg-slate-900/70 rounded-lg p-2.5 border border-slate-800/80 mb-3 text-[11px] flex items-center gap-2.5">
           <div className="p-1.5 rounded-md bg-sky-950/80 border border-sky-800/70 text-sky-400">
             <Train className="w-3.5 h-3.5" />
           </div>
           <div>
             <div className="text-slate-200 font-semibold">
-              Station {nearestStation} Proximity
+              Canonical Railway Station: {selectedStation.name}
             </div>
             <div className="text-[10px] text-slate-400">
-              {distToStation} km to canonical railway corridor node
+              Corridor Node {selectedStation.id} · Exact station alignment position (0.0 km offset)
             </div>
           </div>
         </div>
+      ) : (
+        nearestStation && (
+          <div className="bg-slate-900/70 rounded-lg p-2.5 border border-slate-800/80 mb-3 text-[11px] flex items-center gap-2.5">
+            <div className="p-1.5 rounded-md bg-sky-950/80 border border-sky-800/70 text-sky-400">
+              <Train className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <div className="text-slate-200 font-semibold">
+                Station {nearestStation} Proximity
+              </div>
+              <div className="text-[10px] text-slate-400">
+                {distToStation} km to canonical railway corridor node
+              </div>
+            </div>
+          </div>
+        )
       )}
 
       {/* 72-Month Multi-Year Seasonal History Sparkline */}

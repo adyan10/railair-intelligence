@@ -111,26 +111,83 @@ export function LandingPage() {
             role="img"
             aria-label="WAP-7 High-Speed Passenger Locomotive Technical Vector"
           >
-            {/* 1. Decorative Regional Northern India Sector Map */}
-            <g transform="translate(-70, -15) scale(1.18)">
-              <g id="hero-india-map" className="anim-map-reveal">
-                <path
-                  d="M780,45 L805,40 L825,55 L840,75 L865,95 L845,120 L870,140 L915,145 L945,160 L940,185 L905,190 L885,205 L875,230 L840,250 L830,290 L810,335 L795,370 L785,340 L765,300 L745,260 L730,225 L715,195 L705,175 L730,145 L745,115 L740,85 L760,65 Z"
-                  fill="#EEF3F9"
-                  stroke="#CBD5E1"
-                  strokeWidth="1.2"
-                  strokeLinejoin="round"
-                />
-                <path d="M760,65 L775,30 L795,32 L805,40" fill="#EEF3F9" stroke="#CBD5E1" strokeWidth="1.2" />
+            {/* 1. Authentic Survey of India Map & NCR Sector Corridors */}
+            <g id="hero-india-map" className="anim-map-reveal">
+              {/* Mainland India Outline */}
+              <path
+                d="M827.1,50.0 L831.6,50.3 L842.4,44.0 L848.0,43.8 L856.2,50.8 L857.9,48.9 L860.3,50.1 L856.4,59.7 L849.9,62.8 L851.0,65.5 L848.7,68.4 L842.8,68.8 L845.1,72.9 L843.0,73.1 L843.4,76.1 L848.8,78.5 L847.9,80.8 L850.4,84.9 L843.7,89.1 L841.1,84.6 L837.1,86.7 L841.6,93.3 L841.5,101.8 L845.2,100.0 L849.0,105.4 L854.0,106.0 L858.3,108.6 L858.0,110.9 L867.3,115.0 L859.7,121.2 L856.4,132.6 L869.4,138.4 L877.1,144.6 L886.6,146.3 L886.9,149.0 L893.5,151.2 L894.4,149.3 L899.8,151.0 L903.1,148.8 L908.5,151.0 L908.7,154.7 L915.2,158.2 L920.0,156.8 L922.6,160.6 L928.1,160.0 L932.6,162.4 L936.6,160.4 L939.6,163.3 L945.9,161.6 L947.3,163.2 L949.3,158.5 L947.0,153.8 L948.5,143.9 L954.5,141.4 L957.4,144.6 L955.9,148.2 L957.7,151.6 L955.7,153.5 L960.2,157.6 L993.7,157.1 L994.4,151.7 L993.2,149.3 L989.0,149.3 L988.9,145.8 L998.2,145.4 L1001.4,143.1 L1000.8,141.0 L1009.4,134.6 L1018.9,131.3 L1019.3,128.6 L1023.1,126.8 L1030.4,129.6 L1039.5,125.7 L1042.3,128.1 L1041.0,130.0 L1042.6,129.0 L1046.1,133.8 L1043.5,136.6 L1047.0,135.3 L1054.4,140.3 L1054.8,142.7 L1049.0,147.7 L1051.9,154.1 L1046.9,150.6 L1041.5,151.8 L1029.1,160.0 L1029.5,166.7 L1023.2,175.2 L1024.1,180.9 L1017.7,194.3 L1008.2,191.4 L1008.9,203.2 L1005.9,204.3 L1006.8,214.0 L1003.4,218.0 L1001.0,215.3 L999.9,217.5 L996.2,195.9 L992.5,195.7 L991.1,203.7 L988.7,205.6 L986.8,201.6 L985.5,203.6 L983.4,197.3 L985.9,191.1 L991.9,190.8 L992.1,188.3 L994.9,187.3 L995.7,181.3 L998.7,181.6 L997.9,179.7 L968.3,176.4 L968.8,168.3 L966.4,164.7 L965.3,168.0 L962.7,167.6 L959.7,162.7 L957.6,162.6 L959.2,164.7 L954.8,164.4 L951.8,159.9 L951.0,161.7 L953.2,163.2 L949.2,165.8 L948.4,169.9 L958.7,176.8 L952.3,177.4 L951.8,180.7 L948.8,180.8 L947.3,184.2 L955.6,189.0 L953.6,196.8 L956.4,198.7 L955.4,201.7 L958.6,202.2 L956.9,204.7 L959.8,221.8 L955.5,221.2 L956.1,217.1 L954.5,216.3 L952.4,222.1 L950.3,220.6 L950.0,222.7 L949.6,215.4 L947.4,214.5 L949.4,216.0 L944.9,221.0 L934.7,225.5 L934.2,232.4 L936.5,233.1 L932.7,235.4 L932.0,238.4 L933.4,237.8 L928.5,242.7 L913.3,249.6 L902.8,263.0 L882.0,278.8 L881.9,284.7 L870.1,288.0 L866.3,295.3 L863.3,293.0 L858.6,295.7 L856.1,303.1 L859.5,325.3 L852.8,345.3 L854.2,362.2 L847.4,362.8 L842.9,372.4 L846.2,375.0 L835.7,378.2 L833.4,386.2 L827.5,390.0 L821.3,386.5 L816.0,379.7 L817.3,378.5 L815.9,379.3 L813.8,373.9 L808.2,352.1 L800.6,341.2 L792.7,313.5 L780.6,291.0 L778.8,275.6 L774.6,264.2 L776.5,265.1 L776.3,262.9 L774.4,262.5 L773.7,258.3 L775.5,258.0 L774.3,255.7 L776.1,254.2 L775.2,252.1 L773.1,255.8 L772.9,250.7 L774.3,250.9 L772.4,248.8 L774.1,248.0 L772.2,247.9 L771.4,244.1 L774.5,232.6 L770.7,226.0 L774.5,221.3 L770.0,221.4 L772.5,217.6 L769.7,217.6 L770.6,214.7 L774.3,214.0 L767.6,213.4 L765.2,227.2 L750.4,233.5 L742.8,229.0 L728.8,213.5 L730.3,211.3 L732.1,214.1 L743.0,210.5 L746.1,205.2 L743.5,204.2 L737.7,208.1 L731.8,206.9 L725.3,202.8 L722.9,198.5 L727.3,194.0 L720.0,197.2 L722.1,192.8 L726.7,192.8 L727.3,188.6 L741.3,190.3 L747.4,187.2 L749.1,189.8 L753.8,187.5 L748.5,171.3 L744.0,171.2 L742.1,168.4 L743.0,160.8 L735.4,158.4 L736.2,153.0 L745.2,142.7 L751.0,146.5 L762.7,143.3 L768.4,133.3 L774.7,130.1 L779.9,118.7 L786.5,115.6 L786.0,112.0 L794.8,104.7 L792.6,104.0 L793.8,94.6 L802.5,90.4 L799.4,87.3 L794.6,87.1 L794.9,82.8 L791.1,83.7 L782.6,79.7 L779.9,63.8 L788.3,54.6 L783.9,53.3 L784.3,49.5 L780.0,49.5 L776.8,47.1 L777.4,45.4 L770.4,45.5 L770.2,40.8 L776.0,35.0 L785.1,34.7 L783.0,32.2 L799.9,30.8 L817.9,41.7 L819.3,45.4 L825.2,47.1 L827.1,50.0 Z"
+                fill="#EEF3F9"
+                stroke="#CBD5E1"
+                strokeWidth="1.2"
+                strokeLinejoin="round"
+              />
 
-                <path d="M755,110 L775,150 L815,185 L845,240" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3,3" />
-                <path d="M755,110 L740,165 L765,230 L795,330" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3,3" />
-                <path d="M755,110 L830,135 L890,155" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3,3" />
+              {/* Andaman & Nicobar Islands */}
+              <g id="andaman-nicobar">
+                <ellipse cx="1003" cy="328" rx="2.2" ry="7.5" fill="#EEF3F9" stroke="#CBD5E1" strokeWidth="0.9" />
+                <ellipse cx="1001" cy="346" rx="2.2" ry="6.5" fill="#EEF3F9" stroke="#CBD5E1" strokeWidth="0.9" />
+                <ellipse cx="1014" cy="396" rx="2.8" ry="5.0" fill="#EEF3F9" stroke="#CBD5E1" strokeWidth="0.9" />
+              </g>
 
-                <circle cx="775" cy="125" r="4" fill="#17365D" />
-                <circle cx="775" cy="125" r="9" fill="none" stroke="#17365D" strokeWidth="1" strokeDasharray="2,2" />
-                <text x="790" y="128" fill="#17365D" fontFamily="'JetBrains Mono'" fontSize="9" fontWeight="600">
+              {/* Lakshadweep Islands */}
+              <g id="lakshadweep">
+                <circle cx="770" cy="358" r="1.8" fill="#EEF3F9" stroke="#CBD5E1" strokeWidth="0.8" />
+                <circle cx="766" cy="364" r="1.5" fill="#EEF3F9" stroke="#CBD5E1" strokeWidth="0.8" />
+              </g>
+
+              {/* Strategic Railway Arterial Corridors Radiating from NCR */}
+              <g opacity="0.6">
+                {/* Western Corridor (Delhi -> Mumbai) */}
+                <path d="M824,135 L805,160 L778,215 L773,255" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3,3" />
+                {/* Grand Trunk Corridor (Delhi -> Chennai) */}
+                <path d="M824,135 L826,202 L837,245 L829,280 L859,328" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3,3" />
+                {/* Eastern Corridor (Delhi -> Kolkata) */}
+                <path d="M824,135 L857,168 L905,178 L951,210" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3,3" />
+                {/* Northern Corridor (Delhi -> Amritsar) */}
+                <path d="M824,135 L818,114 L797,98" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3,3" />
+              </g>
+
+              {/* NCR Hub Pointer & Sector Callout */}
+              <g id="ncr-pointer">
+                {/* Outer radar pulse rings */}
+                <circle cx="824" cy="135" r="12" fill="#17365D" fillOpacity="0.08" />
+                <circle cx="824" cy="135" r="8" fill="none" stroke="#17365D" strokeWidth="1" strokeDasharray="2,2" />
+
+                {/* Meerut-Delhi corridor active link */}
+                <line x1="824" y1="135" x2="829" y2="131" stroke="#17365D" strokeWidth="2.5" strokeLinecap="round" />
+
+                {/* Delhi Node */}
+                <circle cx="824" cy="135" r="3.5" fill="#17365D" />
+                <circle cx="824" cy="135" r="1.5" fill="#38BDF8" />
+
+                {/* Meerut Node */}
+                <circle cx="829" cy="131" r="2.5" fill="#0284C7" />
+
+                {/* Leader line to callout */}
+                <path d="M829,131 L844,122 L854,122" fill="none" stroke="#17365D" strokeWidth="1.2" />
+
+                {/* NCR Sector Label */}
+                <text
+                  x="858"
+                  y="120"
+                  fill="#17365D"
+                  fontFamily="'JetBrains Mono', ui-monospace, monospace"
+                  fontSize="8.5"
+                  fontWeight="700"
+                  letterSpacing="0.4"
+                >
                   NORTHERN / NCR SECTOR
+                </text>
+                <text
+                  x="858"
+                  y="130"
+                  fill="#64748B"
+                  fontFamily="'JetBrains Mono', ui-monospace, monospace"
+                  fontSize="7"
+                  fontWeight="600"
+                  letterSpacing="0.2"
+                >
+                  MEERUT ⇄ NEW DELHI (83 KM)
                 </text>
               </g>
             </g>

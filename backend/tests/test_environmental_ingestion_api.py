@@ -66,7 +66,7 @@ def test_cpcb_ground_stations_corridor_and_null_handling(client: TestClient):
     mapped = [item for item in data["items"] if item["nearest_canonical_station_id"] is not None]
     assert len(mapped) > 0
     canonical_ids = {item["nearest_canonical_station_id"] for item in mapped}
-    assert any(cid in canonical_ids for cid in ["MRT", "NDLS", "GZB", "DSA", "SBB"])
+    assert any(cid in canonical_ids for cid in ["MRT", "NDLS", "GZB", "SAH", "DSO"])
 
 
 def test_cpcb_ground_stations_filtering(client: TestClient):

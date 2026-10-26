@@ -56,7 +56,7 @@ async def list_ground_stations(
     ),
     canonical_station_id: Optional[str] = Query(
         None,
-        description="Filter stations within 25 km of a canonical railway station (e.g. MRT, MMU, MNR, GZB, SBB, DSA, NDLS)",
+        description="Filter stations within 25 km of a canonical railway station (e.g. MRT, MMU, MNR, GZB, SAH, DSO, NDLS)",
     ),
     quality_status: Optional[str] = Query(
         None,

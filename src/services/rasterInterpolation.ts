@@ -1,12 +1,13 @@
 /**
  * RailAir Intelligence — Continuous Spatial Interpolation & Raster Engine
  *
- * Implements scientifically defensible bilinear spatial interpolation over the
- * coarse 10 km (8x8) PM2.5/PM10 gridded baseline to produce a continuous Windy.com-style
- * pollution field with soft boundary feathering and perceptually tuned color transitions.
+ * Implements bicubic Catmull-Rom spatial interpolation over the coarse 10 km (8x8)
+ * PM2.5/PM10 gridded baseline to produce a continuous, visually smooth Windy-style
+ * pollution field with natural boundary attenuation and perceptually continuous color transitions.
  *
- * Note: Visual interpolation is a cartographic rendering technique; underlying
- * source data precision remains the verified 10 km grid cells.
+ * Scientific Integrity Note:
+ * Visual interpolation is a cartographic rendering smoothing technique; the underlying
+ * source data precision remains the verified 10 km grid cells (64 nodes) spanning 2017–2022.
  */
 
 import type { EnvironmentalPollutant, GridCellRecord } from '../types/environmental';
@@ -120,6 +121,44 @@ export function getColorScaleGradientCss(pollutant: EnvironmentalPollutant): str
   return `linear-gradient(to right, ${stops.join(', ')})`;
 }
 
+// Precomputed 1024-entry lookup tables (LUT) for O(1) high-throughput color sampling
+const LUT_SIZE = 1024;
+export const PM25_LUT_MAX = 300;
+export const PM10_LUT_MAX = 600;
+
+function createColorLut(pollutant: EnvironmentalPollutant, maxVal: number): Uint8ClampedArray {
+  const lut = new Uint8ClampedArray(LUT_SIZE * 3);
+  for (let i = 0; i < LUT_SIZE; i++) {
+    const val = (i / (LUT_SIZE - 1)) * maxVal;
+    const { r, g, b } = interpolateRampColor(val, pollutant);
+    lut[i * 3] = r;
+    lut[i * 3 + 1] = g;
+    lut[i * 3 + 2] = b;
+  }
+  return lut;
+}
+
+export const PM25_LUT = createColorLut('PM2.5', PM25_LUT_MAX);
+export const PM10_LUT = createColorLut('PM10', PM10_LUT_MAX);
+
+/**
+ * Fast O(1) lookup table color sampler.
+ */
+export function sampleLutColor(
+  value: number,
+  pollutant: EnvironmentalPollutant
+): { r: number; g: number; b: number } {
+  const lut = pollutant === 'PM2.5' ? PM25_LUT : PM10_LUT;
+  const maxVal = pollutant === 'PM2.5' ? PM25_LUT_MAX : PM10_LUT_MAX;
+  const norm = Math.max(0, Math.min(1, value / maxVal));
+  const idx = Math.min(LUT_SIZE - 1, Math.floor(norm * (LUT_SIZE - 1)));
+  return {
+    r: lut[idx * 3],
+    g: lut[idx * 3 + 1],
+    b: lut[idx * 3 + 2],
+  };
+}
+
 /**
  * Converts 64 flat grid cell records into an 8x8 matrix sorted south-to-north, west-to-east.
  */
@@ -127,7 +166,6 @@ export function buildGridMatrix(cells: GridCellRecord[]): number[][] {
   const matrix: number[][] = Array.from({ length: 8 }, () => Array(8).fill(0));
 
   for (const cell of cells) {
-    // Find closest lat and lon indices
     let bestR = 0;
     let minDLat = Infinity;
     for (let r = 0; r < 8; r++) {
@@ -155,7 +193,120 @@ export function buildGridMatrix(cells: GridCellRecord[]): number[][] {
 }
 
 /**
+ * Standard Catmull-Rom cubic spline interpolation in 1D.
+ * C1 continuous with zero second derivative at boundaries when evaluated at nodes.
+ * Guarantees exact node value preservation at t=0 (returns p1) and t=1 (returns p2).
+ */
+export function catmullRom1D(p0: number, p1: number, p2: number, p3: number, t: number): number {
+  return 0.5 * (
+    2 * p1 +
+    (-p0 + p2) * t +
+    (2 * p0 - 5 * p1 + 4 * p2 - p3) * (t * t) +
+    (-p0 + 3 * p1 - 3 * p2 + p3) * (t * t * t)
+  );
+}
+
+/**
+ * Samples continuous concentration via 2D Bicubic Catmull-Rom interpolation.
+ *
+ * Characteristics:
+ * - C1 continuous surface: eliminates visible bilinear creases / facets.
+ * - Exact node value preservation: evaluates exactly to matrix[r][c] at all 64 source-grid nodes.
+ * - Numerical safeguards: clamps against negative values and local overshoot.
+ * - Coverage enforcement: strictly returns null outside CORRIDOR_ENVELOPE.
+ */
+export function sampleBicubicConcentration(
+  lat: number,
+  lon: number,
+  matrix: number[][]
+): number | null {
+  const { south, west, north, east } = CORRIDOR_ENVELOPE;
+  if (lat < south || lat > north || lon < west || lon > east) {
+    return null; // Outside dataset footprint
+  }
+
+  // Determine row interval in GRID_LATS
+  let r0 = 0;
+  if (lat <= GRID_LATS[0]) {
+    r0 = 0;
+  } else if (lat >= GRID_LATS[7]) {
+    r0 = 6;
+  } else {
+    while (r0 < 6 && GRID_LATS[r0 + 1] <= lat) {
+      r0++;
+    }
+  }
+  const r1 = r0 + 1;
+  const lat0 = GRID_LATS[r0];
+  const lat1 = GRID_LATS[r1];
+  const v = Math.max(0, Math.min(1, (lat - lat0) / (lat1 - lat0)));
+
+  // Determine column interval in GRID_LONS
+  let c0 = 0;
+  if (lon <= GRID_LONS[0]) {
+    c0 = 0;
+  } else if (lon >= GRID_LONS[7]) {
+    c0 = 6;
+  } else {
+    while (c0 < 6 && GRID_LONS[c0 + 1] <= lon) {
+      c0++;
+    }
+  }
+  const c1 = c0 + 1;
+  const lon0 = GRID_LONS[c0];
+  const lon1 = GRID_LONS[c1];
+  const u = Math.max(0, Math.min(1, (lon - lon0) / (lon1 - lon0)));
+
+  // Safe row clamping across 4-point stencil
+  const rm1 = Math.max(0, r0 - 1);
+  const rp0 = r0;
+  const rp1 = Math.min(7, r1);
+  const rp2 = Math.min(7, r1 + 1);
+
+  // Safe col clamping across 4-point stencil
+  const cm1 = Math.max(0, c0 - 1);
+  const cp0 = c0;
+  const cp1 = Math.min(7, c1);
+  const cp2 = Math.min(7, c1 + 1);
+
+  // Fast path for exact grid nodes: preserve node value identically
+  if (u === 0 && v === 0) {
+    return matrix[rp0][cp0];
+  }
+
+  // Interpolate 4 rows horizontally
+  const q_m1 = catmullRom1D(matrix[rm1][cm1], matrix[rm1][cp0], matrix[rm1][cp1], matrix[rm1][cp2], u);
+  const q_0  = catmullRom1D(matrix[rp0][cm1], matrix[rp0][cp0], matrix[rp0][cp1], matrix[rp0][cp2], u);
+  const q_1  = catmullRom1D(matrix[rp1][cm1], matrix[rp1][cp0], matrix[rp1][cp1], matrix[rp1][cp2], u);
+  const q_2  = catmullRom1D(matrix[rp2][cm1], matrix[rp2][cp0], matrix[rp2][cp1], matrix[rp2][cp2], u);
+
+  // Interpolate vertically
+  const rawVal = catmullRom1D(q_m1, q_0, q_1, q_2, v);
+
+  // Numerical safeguards: prevent implausible negative values and extreme overshoot ringing
+  const localMax = Math.max(
+    matrix[rp0][cp0],
+    matrix[rp0][cp1],
+    matrix[rp1][cp0],
+    matrix[rp1][cp1]
+  );
+  const localMin = Math.min(
+    matrix[rp0][cp0],
+    matrix[rp0][cp1],
+    matrix[rp1][cp0],
+    matrix[rp1][cp1]
+  );
+  const margin = 0.25 * (localMax - localMin);
+  const upperBound = localMax + margin;
+  const lowerBound = Math.max(0, localMin - margin);
+
+  const clampedVal = Math.max(lowerBound, Math.min(upperBound, rawVal));
+  return Math.round(clampedVal * 100) / 100;
+}
+
+/**
  * Samples continuous concentration at any (lat, lon) coordinate via bilinear interpolation.
+ * Maintained for backward compatibility and analytical verification.
  */
 export function sampleBilinearConcentration(
   lat: number,
@@ -199,8 +350,37 @@ export function sampleBilinearConcentration(
 }
 
 /**
- * Smooth cartographic envelope feathering factor [0..1] with softly rounded corners.
- * Softens the perimeter boundary without producing a harsh square or looking like an atmospheric wall.
+ * Natural cartographic boundary attenuation factor [0..1].
+ * Replaces hard/rounded-rectangle stickers with a continuous, progressive edge attenuation
+ * using C1 smoothstep falloff over the outer margin. Reaches 0.0 alpha at the boundary with
+ * zero derivative, ensuring a seamless fade into the basemap.
+ */
+export function naturalBoundaryFactor(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  marginFraction = 0.075
+): number {
+  const dx = Math.min(x, width - 1 - x) / (width - 1);
+  const dy = Math.min(y, height - 1 - y) / (height - 1);
+
+  if (dx <= 0 || dy <= 0) return 0.0;
+
+  const smoothstep = (d: number, m: number): number => {
+    if (d >= m) return 1.0;
+    const t = d / m;
+    return t * t * (3 - 2 * t);
+  };
+
+  const sx = smoothstep(dx, marginFraction);
+  const sy = smoothstep(dy, marginFraction);
+  return sx * sy;
+}
+
+/**
+ * Cartographic envelope feathering factor [0..1] with softly rounded corners.
+ * Retained for backward-compatible interface and testing.
  */
 export function roundedEnvelopeFactor(
   x: number,
@@ -210,29 +390,9 @@ export function roundedEnvelopeFactor(
   cornerRadius = 24,
   featherWidth = 14
 ): number {
-  const dx = Math.min(x, width - 1 - x);
-  const dy = Math.min(y, height - 1 - y);
-
-  if (dx < 0 || dy < 0) return 0.0;
-
-  // In the corner regions
-  if (dx < cornerRadius && dy < cornerRadius) {
-    const cornerDx = cornerRadius - dx;
-    const cornerDy = cornerRadius - dy;
-    const distToCornerCenter = Math.sqrt(cornerDx * cornerDx + cornerDy * cornerDy);
-    const borderDist = cornerRadius - distToCornerCenter;
-    if (borderDist <= 0) return 0.0;
-    if (borderDist >= featherWidth) return 1.0;
-    const t = borderDist / featherWidth;
-    return t * t * (3 - 2 * t);
-  }
-
-  // Along straight edges
-  const edgeDist = Math.min(dx, dy);
-  if (edgeDist >= featherWidth) return 1.0;
-  if (edgeDist <= 0) return 0.0;
-  const t = edgeDist / featherWidth;
-  return t * t * (3 - 2 * t);
+  void cornerRadius;
+  void featherWidth;
+  return naturalBoundaryFactor(x, y, width, height, 0.075);
 }
 
 // In-memory raster URL cache to eliminate regeneration lag during 72-month playback
@@ -246,22 +406,24 @@ export function clearRasterCache(): void {
 }
 
 /**
- * Generates an interpolated high-resolution canvas raster data URL (256x256).
+ * Generates an interpolated high-resolution canvas raster data URL (512x512).
+ * Uses bicubic Catmull-Rom spatial interpolation and a precomputed color LUT
+ * for silky-smooth, continuous gradient rendering without blocky pixels or grid-related facets.
  * Uses in-memory caching for zero-latency frame transitions during animation playback.
  */
 export function generateInterpolatedRasterDataUrl(
   cells: GridCellRecord[],
   pollutant: EnvironmentalPollutant,
-  canvasWidth = 256,
-  canvasHeight = 256
+  canvasWidth = 512,
+  canvasHeight = 512
 ): string {
   if (typeof document === 'undefined') {
     return ''; // SSR / non-browser fallback
   }
 
-  // Compute robust cache key using pollutant and full cell values to ensure local edits invalidate cache
+  // Compute robust cache key using dimensions, pollutant and full cell values
   const cellsSignature = cells.map((c) => `${c.grid_id}:${c.value}`).join(';');
-  const cacheKey = `${pollutant}_${cells.length}_${cellsSignature}`;
+  const cacheKey = `${pollutant}_${canvasWidth}x${canvasHeight}_${cells.length}_${cellsSignature}`;
   const cached = rasterUrlCache.get(cacheKey);
   if (cached) return cached;
 
@@ -276,22 +438,34 @@ export function generateInterpolatedRasterDataUrl(
   const data = imgData.data;
 
   const { south, north, west, east } = CORRIDOR_ENVELOPE;
+  const dLat = (north - south) / (canvasHeight - 1);
+  const dLon = (east - west) / (canvasWidth - 1);
+
+  const lut = pollutant === 'PM2.5' ? PM25_LUT : PM10_LUT;
+  const maxVal = pollutant === 'PM2.5' ? PM25_LUT_MAX : PM10_LUT_MAX;
+  const lutScale = (LUT_SIZE - 1) / maxVal;
 
   for (let y = 0; y < canvasHeight; y++) {
-    // In canvas, y=0 is north (top), y=height is south (bottom)
-    const lat = north - (y / (canvasHeight - 1)) * (north - south);
+    // In canvas, y=0 is north (top), y=height-1 is south (bottom)
+    const lat = north - y * dLat;
 
     for (let x = 0; x < canvasWidth; x++) {
-      const lon = west + (x / (canvasWidth - 1)) * (east - west);
-      const val = sampleBilinearConcentration(lat, lon, matrix) ?? 0;
-      const { r, g, b } = interpolateRampColor(val, pollutant);
-      const feather = roundedEnvelopeFactor(x, y, canvasWidth, canvasHeight, 22, 14);
+      const lon = west + x * dLon;
+      const val = sampleBicubicConcentration(lat, lon, matrix) ?? 0;
+
+      // Color mapping via precomputed LUT
+      const normIdx = Math.max(0, Math.min(LUT_SIZE - 1, Math.round(val * lutScale)));
+      const r = lut[normIdx * 3];
+      const g = lut[normIdx * 3 + 1];
+      const b = lut[normIdx * 3 + 2];
+
+      const feather = naturalBoundaryFactor(x, y, canvasWidth, canvasHeight);
 
       const idx = (y * canvasWidth + x) * 4;
       data[idx] = r;
       data[idx + 1] = g;
       data[idx + 2] = b;
-      // Alpha: maximum opacity 235 (out of 255) scaled by edge feathering
+      // Alpha: maximum opacity 235 (out of 255) scaled by progressive natural edge feathering
       data[idx + 3] = Math.round(235 * feather);
     }
   }

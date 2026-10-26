@@ -128,8 +128,18 @@ export interface LocationInspectionResponse {
   timeseries: TimeSeriesPoint[];
 }
 
+export interface CanonicalStation {
+  id: string;
+  ir_code?: string;
+  name: string;
+  lat: number;
+  lng: number;
+  city: string;
+}
+
 export interface CorridorStationComparison {
   station_id: string;
+  ir_code?: string;
   station_name: string;
   city: string;
   latitude: number;

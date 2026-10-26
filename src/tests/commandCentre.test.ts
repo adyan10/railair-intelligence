@@ -23,6 +23,17 @@ describe('Environmental Command Centre Analytics & Synchronization', () => {
     const stationIds = comparison.map((s) => s.station_id);
     expect(stationIds).toEqual(['MRT', 'MMU', 'MNR', 'GZB', 'SAH', 'DSO', 'NDLS']);
 
+    const irCodes = Object.fromEntries(comparison.map((s) => [s.station_id, s.ir_code]));
+    expect(irCodes).toEqual({
+      MRT: 'MTC',
+      MMU: 'MDNR',
+      MNR: 'MUD',
+      GZB: 'GZB',
+      SAH: 'SBB',
+      DSO: 'DSA',
+      NDLS: 'NDLS',
+    });
+
     for (const st of comparison) {
       expect(st.ambient_grid_value).toBeGreaterThan(0);
       expect(st.distance_to_cell_km).toBeLessThan(15);

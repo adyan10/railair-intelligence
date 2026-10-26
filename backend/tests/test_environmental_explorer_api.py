@@ -147,8 +147,20 @@ def test_corridor_comparison():
     stations = response.json()
     assert len(stations) == 7
     station_ids = [s["station_id"] for s in stations]
-    assert "MRT" in station_ids
-    assert "NDLS" in station_ids
+    assert station_ids == ["MRT", "MMU", "MNR", "GZB", "SAH", "DSO", "NDLS"]
+
+    # Verify official Indian Railways CRIS station code mappings
+    ir_codes = {s["station_id"]: s.get("ir_code") for s in stations}
+    assert ir_codes == {
+        "MRT": "MTC",
+        "MMU": "MDNR",
+        "MNR": "MUD",
+        "GZB": "GZB",
+        "SAH": "SBB",
+        "DSO": "DSA",
+        "NDLS": "NDLS",
+    }
+
     for s in stations:
         assert s["ambient_grid_value"] is not None
         assert s["distance_to_cell_km"] < 15.0

@@ -14,10 +14,13 @@ density vs reanalysis vs model estimate), and maps nearest canonical railway sta
 import csv
 import hashlib
 import json
+import logging
 import math
 import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 from ..models.schemas import (
     EnvironmentalDatasetInfo,
@@ -47,13 +50,13 @@ DERIVED_DIR = RESOURCES_DIR / "environmental-derived"
 
 # Canonical RailAir Corridor Stations (WGS84 Coordinates)
 CANONICAL_STATIONS = [
-    {"id": "MRT", "name": "Meerut City Junction", "lat": 28.9845, "lng": 77.7064, "city": "Meerut"},
-    {"id": "MMU", "name": "Modinagar", "lat": 28.8324, "lng": 77.5803, "city": "Modinagar"},
-    {"id": "MNR", "name": "Muradnagar", "lat": 28.7772, "lng": 77.5028, "city": "Muradnagar"},
-    {"id": "GZB", "name": "Ghaziabad Junction", "lat": 28.6656, "lng": 77.4312, "city": "Ghaziabad"},
-    {"id": "SBB", "name": "Sahibabad Junction", "lat": 28.6728, "lng": 77.3625, "city": "Sahibabad"},
-    {"id": "DSA", "name": "Delhi Shahdara Junction", "lat": 28.6722, "lng": 77.2947, "city": "Delhi"},
-    {"id": "NDLS", "name": "New Delhi", "lat": 28.6429, "lng": 77.2195, "city": "Delhi"},
+    {"id": "MRT", "ir_code": "MTC", "name": "Meerut City Junction", "lat": 28.9845, "lng": 77.7064, "city": "Meerut"},
+    {"id": "MMU", "ir_code": "MDNR", "name": "Modinagar", "lat": 28.8324, "lng": 77.5803, "city": "Modinagar"},
+    {"id": "MNR", "ir_code": "MUD", "name": "Muradnagar", "lat": 28.7772, "lng": 77.5028, "city": "Muradnagar"},
+    {"id": "GZB", "ir_code": "GZB", "name": "Ghaziabad Junction", "lat": 28.6656, "lng": 77.4312, "city": "Ghaziabad"},
+    {"id": "SAH", "ir_code": "SBB", "name": "Sahibabad Junction", "lat": 28.6728, "lng": 77.3625, "city": "Sahibabad"},
+    {"id": "DSO", "ir_code": "DSA", "name": "Delhi Shahdara Junction", "lat": 28.6722, "lng": 77.2947, "city": "Delhi"},
+    {"id": "NDLS", "ir_code": "NDLS", "name": "New Delhi", "lat": 28.6429, "lng": 77.2195, "city": "Delhi"},
 ]
 
 CORRIDOR_CITIES = {"delhi", "ghaziabad", "meerut", "noida", "greater noida", "modinagar", "muradnagar"}
@@ -430,20 +433,22 @@ class EnvironmentalService:
 
         target_file = DERIVED_DIR / "corridor_pm_monthly_2017_2022.json"
         if not target_file.exists():
-            # Trigger extraction if missing
-            try:
-                from .extract_corridor_netcdf import run_corridor_extraction
-                run_corridor_extraction()
-            except Exception:
-                # If cannot run directly, return empty
-                pass
-
-        if not target_file.exists():
+            logger.warning(
+                "Derived gridded estimates file not found at %s. "
+                "Ensure offline extraction has been executed via "
+                "backend-resources/environmental-derived/extract_corridor_netcdf.py.",
+                target_file,
+            )
             self._gridded_estimates = []
             return []
 
-        with open(target_file, "r", encoding="utf-8") as f:
-            raw_records = json.load(f)
+        try:
+            with open(target_file, "r", encoding="utf-8") as f:
+                raw_records = json.load(f)
+        except Exception as e:
+            logger.error("Failed to read gridded corridor estimates from %s: %s", target_file, e)
+            self._gridded_estimates = []
+            return []
 
         estimates = []
         for r in raw_records:
@@ -1089,6 +1094,7 @@ class EnvironmentalService:
 
             station_comparisons.append({
                 "station_id": st["id"],
+                "ir_code": st.get("ir_code"),
                 "station_name": st["name"],
                 "city": st["city"],
                 "latitude": st["lat"],

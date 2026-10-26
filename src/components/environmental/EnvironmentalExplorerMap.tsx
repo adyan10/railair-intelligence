@@ -6,6 +6,7 @@ import {
   CircleMarker,
   Polyline,
   Tooltip,
+  ZoomControl,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
@@ -57,6 +58,9 @@ function MapFitController({ triggerReset }: { triggerReset: number }) {
 function MapZoomTracker({ onZoomChange }: { onZoomChange: (z: number) => void }) {
   const map = useMap();
   useMapEvents({
+    zoom() {
+      onZoomChange(map.getZoom());
+    },
     zoomend() {
       onZoomChange(map.getZoom());
     },
@@ -90,6 +94,9 @@ export const EnvironmentalExplorerMap: React.FC = () => {
     gridData,
     selectedCell,
     setSelectedCell,
+    selectedStation,
+    inspectStation,
+    inspectionData,
     inspectCoordinate,
     layerOpacity,
     setLayerOpacity,
@@ -116,7 +123,7 @@ export const EnvironmentalExplorerMap: React.FC = () => {
     if (typeof window !== 'undefined') {
       const z = new URLSearchParams(window.location.search).get('zoom');
       if (z) {
-        const parsed = parseInt(z, 10);
+        const parsed = parseFloat(z);
         if (!isNaN(parsed) && parsed >= 4 && parsed <= 14) return parsed;
       }
     }
@@ -143,7 +150,7 @@ export const EnvironmentalExplorerMap: React.FC = () => {
   useEffect(() => {
     if (!gridData?.cells || gridData.cells.length === 0) return;
 
-    const newUrl = generateInterpolatedRasterDataUrl(gridData.cells, pollutant, 256, 256);
+    const newUrl = generateInterpolatedRasterDataUrl(gridData.cells, pollutant, 512, 512);
     if (!newUrl) return;
 
     const currentUrl = activeRasterUrlRef.current;
@@ -188,9 +195,14 @@ export const EnvironmentalExplorerMap: React.FC = () => {
         zoom={initialZoom}
         minZoom={4}
         maxZoom={14}
+        zoomSnap={0}
+        zoomDelta={0.25}
+        wheelPxPerZoomLevel={120}
+        zoomControl={false}
         className="w-full h-full z-0 cursor-crosshair"
         scrollWheelZoom={true}
       >
+        <ZoomControl position="bottomright" />
         <OpenFreeMapLayer />
         <MapFitController triggerReset={resetViewCount} />
         <MapZoomTracker onZoomChange={setCurrentZoom} />
@@ -287,21 +299,21 @@ export const EnvironmentalExplorerMap: React.FC = () => {
             );
           })}
 
-        {/* Selected Inspection Location Marker (if any) */}
-        {selectedCell && (
+        {/* Selected Arbitrary Point Inspection Marker (rendered at exact clicked coordinate, only when NOT inspecting a canonical station) */}
+        {inspectionData && !selectedStation && (
           <CircleMarker
-            center={[selectedCell.latitude, selectedCell.longitude]}
-            radius={8}
+            center={[inspectionData.query_latitude, inspectionData.query_longitude]}
+            radius={7.5}
             pathOptions={{
-              color: '#38BDF8',
+              color: '#FFFFFF',
               fillColor: '#0284C7',
-              fillOpacity: 0.9,
+              fillOpacity: 1.0,
               weight: 2.5,
             }}
           >
             <Tooltip permanent direction="top" offset={[0, -8]}>
               <span className="font-mono text-[10px] font-bold text-slate-900 bg-white/95 px-1.5 py-0.5 rounded shadow-xs border border-sky-400">
-                {selectedCell.grid_id} · {selectedCell.value} µg/m³
+                {inspectionData.query_latitude.toFixed(4)}°N, {inspectionData.query_longitude.toFixed(4)}°E · {inspectionData.value ?? 'NA'} µg/m³
               </span>
             </Tooltip>
           </CircleMarker>
@@ -322,33 +334,73 @@ export const EnvironmentalExplorerMap: React.FC = () => {
 
         {/* Canonical Corridor Stations (7 Nodes) */}
         {showStations &&
-          CANONICAL_CORRIDOR_STATIONS.map((st) => (
-            <CircleMarker
-              key={`${st.id}-${currentZoom >= 9 ? 'labeled' : 'unlabeled'}`}
-              center={[st.lat, st.lng]}
-              radius={5.5}
-              pathOptions={{
-                color: '#0F172A',
-                fillColor: '#38BDF8',
-                fillOpacity: 1.0,
-                weight: 2,
-              }}
-              eventHandlers={{
-                click: () => inspectCoordinate(st.lat, st.lng),
-              }}
-            >
-              <Tooltip
-                permanent={currentZoom >= 9}
-                direction="right"
-                offset={[8, 0]}
-                className="corridor-station-label"
-              >
-                <span className="font-mono text-[10px] font-bold text-slate-900 bg-white/95 px-1 py-0.5 rounded shadow-xs border border-slate-300">
-                  {st.id} · {st.name}
-                </span>
-              </Tooltip>
-            </CircleMarker>
-          ))}
+          CANONICAL_CORRIDOR_STATIONS.map((st) => {
+            const isSelected = selectedStation?.id === st.id;
+            return (
+              <React.Fragment key={st.id}>
+                {/* Station Node Marker - Centered exactly on canonical coordinates */}
+                <CircleMarker
+                  center={[st.lat, st.lng]}
+                  radius={isSelected ? 8.5 : 6}
+                  pathOptions={{
+                    color: isSelected ? '#FFFFFF' : '#0F172A',
+                    fillColor: isSelected ? '#0284C7' : '#38BDF8',
+                    fillOpacity: 1.0,
+                    weight: isSelected ? 3 : 2,
+                  }}
+                  eventHandlers={{
+                    click: (e) => {
+                      if (e && 'originalEvent' in e && e.originalEvent) {
+                        e.originalEvent.stopPropagation();
+                      }
+                      inspectStation(st);
+                    },
+                  }}
+                >
+                  <Tooltip
+                    permanent={currentZoom >= 9}
+                    interactive
+                    direction="right"
+                    offset={[10, 0]}
+                    className="corridor-station-label cursor-pointer"
+                    eventHandlers={{
+                      click: (e) => {
+                        if (e && 'originalEvent' in e && e.originalEvent) {
+                          e.originalEvent.stopPropagation();
+                        }
+                        inspectStation(st);
+                      },
+                    }}
+                  >
+                    <span
+                      className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded shadow-xs border transition-all ${
+                        isSelected
+                          ? 'bg-sky-600 text-white border-sky-300 ring-2 ring-sky-400/50'
+                          : 'bg-white/95 text-slate-900 border-slate-300 hover:bg-sky-50'
+                      }`}
+                    >
+                      {st.id}
+                    </span>
+                  </Tooltip>
+                </CircleMarker>
+
+                {/* Concentric Selection Halo on the Selected Station */}
+                {isSelected && (
+                  <CircleMarker
+                    center={[st.lat, st.lng]}
+                    radius={15}
+                    pathOptions={{
+                      color: '#38BDF8',
+                      fillColor: 'transparent',
+                      weight: 2,
+                      dashArray: '3, 4',
+                      opacity: 0.9,
+                    }}
+                  />
+                )}
+              </React.Fragment>
+            );
+          })}
       </MapContainer>
 
       {/* Multi-Scale Geographic Coverage Banner (Appears when zoomed out beyond corridor) */}
@@ -361,7 +413,7 @@ export const EnvironmentalExplorerMap: React.FC = () => {
                 <div className="font-bold text-sky-200 flex items-center gap-2">
                   <span>{zoomState.label}</span>
                   <span className="text-[10px] font-normal text-slate-400 bg-slate-800 px-1.5 py-0.2 rounded border border-slate-700">
-                    Zoom {currentZoom}
+                    Zoom {typeof currentZoom === 'number' ? (Number.isInteger(currentZoom) ? currentZoom : currentZoom.toFixed(1)) : currentZoom}
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-300 truncate">
@@ -382,7 +434,7 @@ export const EnvironmentalExplorerMap: React.FC = () => {
       )}
 
       {/* Sleek, Collapsible Floating Layer Controls (Top Right) */}
-      <div className="absolute top-4 right-4 z-10 font-mono text-xs">
+      <div className="absolute top-16 right-4 z-20 font-mono text-xs">
         {!isControlsOpen ? (
           <button
             onClick={() => setIsControlsOpen(true)}
@@ -534,7 +586,7 @@ export const EnvironmentalExplorerMap: React.FC = () => {
         </div>
 
         <div className="text-[8px] text-slate-400 mt-1 text-center font-sans tracking-tight">
-          Visual bilinear interpolation · 10 km source grid
+          Visual smooth cubic interpolation · 10 km source grid
         </div>
       </div>
     </div>
