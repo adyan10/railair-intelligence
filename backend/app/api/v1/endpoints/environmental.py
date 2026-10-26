@@ -298,13 +298,25 @@ async def get_grid(
     pollutant: str = Query("PM2.5", description="Pollutant: PM2.5 | PM10"),
     year: int = Query(2022, ge=2017, le=2022, description="Year (2017–2022)"),
     month: int = Query(12, ge=1, le=12, description="Month (1–12)"),
+    min_lat: Optional[float] = Query(None, description="Optional bounding box minimum latitude"),
+    max_lat: Optional[float] = Query(None, description="Optional bounding box maximum latitude"),
+    min_lon: Optional[float] = Query(None, description="Optional bounding box minimum longitude"),
+    max_lon: Optional[float] = Query(None, description="Optional bounding box maximum longitude"),
 ) -> EnvironmentalGridResponse:
     if pollutant.upper() not in ("PM2.5", "PM10"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported pollutant '{pollutant}'. Supported: PM2.5, PM10",
         )
-    return environmental_service.get_grid_for_period(pollutant=pollutant, year=year, month=month)
+    return environmental_service.get_grid_for_period(
+        pollutant=pollutant,
+        year=year,
+        month=month,
+        min_lat=min_lat,
+        max_lat=max_lat,
+        min_lon=min_lon,
+        max_lon=max_lon,
+    )
 
 
 @router.get(

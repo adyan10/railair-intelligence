@@ -930,18 +930,77 @@ class EnvironmentalService:
         pollutant: str = "PM2.5",
         year: int = 2022,
         month: int = 12,
+        min_lat: Optional[float] = None,
+        max_lat: Optional[float] = None,
+        min_lon: Optional[float] = None,
+        max_lon: Optional[float] = None,
     ) -> EnvironmentalGridResponse:
-        """Returns 64-cell contiguous 10 km grid with bounding polygons and AQI color scale."""
+        """Returns contiguous 10 km grid with bounding polygons and AQI color scale.
+        
+        Uses PostgreSQL/PostGIS when available, with automatic fallback to in-memory estimates.
+        """
         p_upper = pollutant.strip().upper()
         if p_upper not in ("PM2.5", "PM10"):
             p_upper = "PM2.5"
 
-        all_est = self._load_gridded_estimates()
-        matching = [e for e in all_est if e.pollutant == p_upper and e.year == year and e.month == month]
+        raw_cells: List[Dict[str, Any]] = []
+        data_provider: Optional[str] = None
 
-        if not matching:
-            year, month = 2022, 12
+        # 1. Attempt database-backed PostGIS query
+        db_result = self._query_gridded_from_db(
+            pollutant=p_upper,
+            year=year,
+            month=month,
+            min_lat=min_lat,
+            max_lat=max_lat,
+            min_lon=min_lon,
+            max_lon=max_lon,
+            limit=500,
+            offset=0,
+        )
+
+        if db_result is not None:
+            data_provider = "postgres_postgis"
+            raw_cells = db_result["items"]
+            # If no bbox was passed and result was empty, fallback to default 2022-12
+            if not raw_cells and min_lat is None and max_lat is None and min_lon is None and max_lon is None:
+                year, month = 2022, 12
+                db_result_def = self._query_gridded_from_db(
+                    pollutant=p_upper,
+                    year=year,
+                    month=month,
+                    limit=500,
+                    offset=0,
+                )
+                raw_cells = db_result_def["items"] if db_result_def else []
+        else:
+            # 2. In-memory fallback
+            all_est = self._load_gridded_estimates()
             matching = [e for e in all_est if e.pollutant == p_upper and e.year == year and e.month == month]
+
+            if not matching and min_lat is None and max_lat is None and min_lon is None and max_lon is None:
+                year, month = 2022, 12
+                matching = [e for e in all_est if e.pollutant == p_upper and e.year == year and e.month == month]
+
+            if min_lat is not None:
+                matching = [e for e in matching if e.latitude >= min_lat]
+            if max_lat is not None:
+                matching = [e for e in matching if e.latitude <= max_lat]
+            if min_lon is not None:
+                matching = [e for e in matching if e.longitude >= min_lon]
+            if max_lon is not None:
+                matching = [e for e in matching if e.longitude <= max_lon]
+
+            raw_cells = [
+                {
+                    "grid_id": e.grid_id,
+                    "latitude": e.latitude,
+                    "longitude": e.longitude,
+                    "value": e.value,
+                    "unit": e.unit,
+                }
+                for e in matching
+            ]
 
         HALF_LAT = 0.05015
         HALF_LON = 0.050125
@@ -949,36 +1008,39 @@ class EnvironmentalService:
         cells: List[GridCellRecord] = []
         values: List[float] = []
 
-        for e in matching:
-            val = e.value
+        for c in raw_cells:
+            val = c["value"]
             cat, _ = classify_aqi_category(p_upper, val)
             col = interpolate_ramp_color_hex(p_upper, val)
             if val is not None:
                 values.append(val)
 
+            lat = float(c["latitude"])
+            lon = float(c["longitude"])
+
             nearest_st: Optional[str] = None
             min_dist: Optional[float] = None
             for st in CANONICAL_STATIONS:
-                d = haversine_distance_km(e.latitude, e.longitude, st["lat"], st["lng"])
+                d = haversine_distance_km(lat, lon, st["lat"], st["lng"])
                 if min_dist is None or d < min_dist:
                     min_dist = round(d, 2)
                     nearest_st = st["id"]
 
             bounds = GridCellBounds(
-                south=round(e.latitude - HALF_LAT, 6),
-                west=round(e.longitude - HALF_LON, 6),
-                north=round(e.latitude + HALF_LAT, 6),
-                east=round(e.longitude + HALF_LON, 6),
+                south=round(lat - HALF_LAT, 6),
+                west=round(lon - HALF_LON, 6),
+                north=round(lat + HALF_LAT, 6),
+                east=round(lon + HALF_LON, 6),
             )
 
             cells.append(
                 GridCellRecord(
-                    grid_id=e.grid_id,
-                    latitude=e.latitude,
-                    longitude=e.longitude,
+                    grid_id=c["grid_id"],
+                    latitude=lat,
+                    longitude=lon,
                     bounds=bounds,
                     value=val,
-                    unit=e.unit,
+                    unit=c.get("unit", "µg/m³"),
                     category=cat,
                     color=col,
                     nearest_station=nearest_st,
@@ -1030,7 +1092,9 @@ class EnvironmentalService:
             total_cells=total_cells,
             summary=summary,
             cells=cells,
+            data_provider=data_provider,
         )
+
 
     def get_timeseries(
         self,
