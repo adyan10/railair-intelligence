@@ -333,12 +333,14 @@ class EnvironmentalService:
 
                 # Match nearest canonical station
                 nearest_station: Optional[str] = None
+                nearest_ir_code: Optional[str] = None
                 nearest_dist: Optional[float] = None
                 for st in CANONICAL_STATIONS:
                     dist = haversine_distance_km(lat, lon, st["lat"], st["lng"])
                     if nearest_dist is None or dist < nearest_dist:
                         nearest_dist = round(dist, 2)
                         nearest_station = st["id"]
+                        nearest_ir_code = st.get("ir_code")
 
                 # Is this monitor relevant to the RailAir corridor?
                 in_bbox = (
@@ -366,6 +368,7 @@ class EnvironmentalService:
                     quality_status=quality,
                     is_corridor=is_corridor,
                     nearest_canonical_station_id=nearest_station if (nearest_dist is not None and nearest_dist <= 25.0) else None,
+                    canonical_ir_code=nearest_ir_code if (nearest_dist is not None and nearest_dist <= 25.0) else None,
                     distance_to_canonical_km=nearest_dist if (nearest_dist is not None and nearest_dist <= 25.0) else None,
                     dataset_id="cpcb_snapshot_2026",
                 )
@@ -373,6 +376,205 @@ class EnvironmentalService:
 
         self._ground_readings = readings
         return readings
+
+    def _is_db_available(self) -> bool:
+        """Fast non-blocking check of database availability."""
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1;")
+                    return True
+        except Exception:
+            return False
+
+    def _get_canonical_stations_map(self) -> Dict[str, Dict[str, Any]]:
+        """Retrieves canonical station metadata from PostgreSQL stations table, with in-memory fallback."""
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT id, ir_code, name, station_type, distance_from_origin_km::float,
+                               latitude::float, longitude::float
+                        FROM stations
+                        ORDER BY distance_from_origin_km ASC;
+                    """)
+                    rows = cur.fetchall()
+                    if rows:
+                        st_dict = {}
+                        for r in rows:
+                            st_dict[r[0]] = {
+                                "id": r[0],
+                                "ir_code": r[1],
+                                "name": r[2],
+                                "station_type": r[3],
+                                "distance_from_origin_km": float(r[4]),
+                                "latitude": float(r[5]),
+                                "longitude": float(r[6]),
+                                "data_provider": "postgres_postgis",
+                            }
+                        return st_dict
+        except Exception as exc:
+            logger.debug("Database stations query failed; falling back to in-memory: %s", exc)
+
+        # Fallback to deterministic in-memory canonical baseline
+        fallback_map = {}
+        for st in CANONICAL_STATIONS:
+            s_id = st["id"]
+            fallback_map[s_id] = {
+                "id": s_id,
+                "ir_code": st.get("ir_code", s_id),
+                "name": st["name"],
+                "station_type": "major" if s_id in ("NDLS", "MRT") else ("junction" if s_id in ("GZB", "SAH") else "halt"),
+                "distance_from_origin_km": 0.0,
+                "latitude": st["lat"],
+                "longitude": st["lng"],
+                "data_provider": "in_memory_synthetic",
+            }
+        return fallback_map
+
+    def get_canonical_stations_metadata(self) -> List[Dict[str, Any]]:
+        """Returns ordered list of canonical corridor stations with ID, CRIS code, and coordinates."""
+        st_map = self._get_canonical_stations_map()
+        return list(st_map.values())
+
+    def _query_ground_stations_from_db(
+        self,
+        pollutant: Optional[str] = None,
+        city: Optional[str] = None,
+        corridor_only: bool = True,
+        canonical_station_id: Optional[str] = None,
+        quality_status: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> Optional[Dict[str, Any]]:
+        """Queries statutory ground CAAQMS observations from PostgreSQL/PostGIS.
+        
+        Returns None when database is unreachable or table is unpopulated, allowing
+        seamless fallback to verified in-memory CPCB telemetry snapshot.
+        """
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    # Check whether environmental_ground_observations has any data
+                    cur.execute("SELECT COUNT(*) FROM environmental_ground_observations LIMIT 1;")
+                    has_any = cur.fetchone()
+                    if not has_any or has_any[0] == 0:
+                        # Table is unpopulated; return None to trigger verified snapshot fallback
+                        return None
+
+                    where_clauses = ["1=1"]
+                    params: List[Any] = []
+
+                    if pollutant:
+                        where_clauses.append("UPPER(g.pollutant) = %s")
+                        params.append(pollutant.strip().upper())
+
+                    if city:
+                        where_clauses.append("LOWER(g.city) = %s")
+                        params.append(city.strip().lower())
+
+                    if canonical_station_id:
+                        where_clauses.append("UPPER(g.canonical_station_id) = %s")
+                        params.append(canonical_station_id.strip().upper())
+
+                    if quality_status:
+                        where_clauses.append("g.quality_status = %s")
+                        params.append(quality_status.strip().lower())
+
+                    if corridor_only:
+                        where_clauses.append("""(
+                            LOWER(g.city) IN ('delhi', 'ghaziabad', 'meerut', 'noida', 'greater noida')
+                            OR (g.latitude BETWEEN %s AND %s AND g.longitude BETWEEN %s AND %s)
+                        )""")
+                        params.extend([
+                            CORRIDOR_BBOX["min_lat"], CORRIDOR_BBOX["max_lat"],
+                            CORRIDOR_BBOX["min_lon"], CORRIDOR_BBOX["max_lon"],
+                        ])
+
+                    where_sql = " AND ".join(where_clauses)
+
+                    count_sql = f"""
+                        SELECT COUNT(*)
+                        FROM environmental_ground_observations g
+                        LEFT JOIN stations s ON g.canonical_station_id = s.id
+                        WHERE {where_sql};
+                    """
+                    cur.execute(count_sql, params)
+                    count_row = cur.fetchone()
+                    total = count_row[0] if count_row else 0
+
+                    query_sql = f"""
+                        SELECT
+                            g.id,
+                            g.source_station_name,
+                            g.city,
+                            g.state,
+                            g.latitude::float as latitude,
+                            g.longitude::float as longitude,
+                            g.pollutant,
+                            g.value_avg::float as value_avg,
+                            g.value_min::float as value_min,
+                            g.value_max::float as value_max,
+                            g.unit,
+                            to_char(g.observed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as observed_at,
+                            to_char(g.acquisition_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as acquisition_at,
+                            g.quality_status,
+                            g.canonical_station_id,
+                            s.ir_code as canonical_ir_code,
+                            ROUND(ST_Distance(g.geom::geography, s.geom::geography) / 1000.0, 2) as distance_km,
+                            g.dataset_id
+                        FROM environmental_ground_observations g
+                        LEFT JOIN stations s ON g.canonical_station_id = s.id
+                        WHERE {where_sql}
+                        ORDER BY g.source_station_name ASC, g.pollutant ASC, g.id ASC
+                        LIMIT %s OFFSET %s;
+                    """
+                    cur.execute(query_sql, params + [limit, offset])
+                    rows = cur.fetchall()
+
+                    items = []
+                    for r in rows:
+                        items.append({
+                            "id": r[0],
+                            "station_name": r[1],
+                            "city": r[2],
+                            "state": r[3],
+                            "latitude": float(r[4]),
+                            "longitude": float(r[5]),
+                            "pollutant": r[6],
+                            "value_avg": float(r[7]) if r[7] is not None else None,
+                            "value_min": float(r[8]) if r[8] is not None else None,
+                            "value_max": float(r[9]) if r[9] is not None else None,
+                            "unit": r[10],
+                            "observed_at": r[11],
+                            "acquisition_at": r[12],
+                            "quality_status": r[13],
+                            "is_corridor": True,
+                            "nearest_canonical_station_id": r[14],
+                            "canonical_ir_code": r[15],
+                            "distance_to_canonical_km": float(r[16]) if r[16] is not None else None,
+                            "dataset_id": r[17],
+                        })
+
+                    return {
+                        "total": total,
+                        "returned": len(items),
+                        "limit": limit,
+                        "offset": offset,
+                        "filters": {
+                            "pollutant": pollutant,
+                            "city": city,
+                            "corridor_only": corridor_only,
+                            "canonical_station_id": canonical_station_id,
+                            "quality_status": quality_status,
+                        },
+                        "items": items,
+                        "data_provider": "postgres_postgis",
+                        "station_metadata_provider": "postgres_postgis",
+                    }
+        except Exception as exc:
+            logger.warning("PostGIS ground-stations query failed; falling back to in-memory: %s", exc)
+            return None
 
     def get_ground_stations(
         self,
@@ -384,7 +586,26 @@ class EnvironmentalService:
         limit: int = 100,
         offset: int = 0,
     ) -> Dict[str, Any]:
-        """Queries CPCB ground stations with bounding/corridor filters and pagination."""
+        """Queries CPCB ground stations with bounding/corridor filters and pagination.
+        
+        Uses PostgreSQL/PostGIS when available and populated, with automatic fallback
+        to verified in-memory statutory CPCB telemetry snapshot. Canonical railway
+        station metadata is database-backed via the stations table.
+        """
+        # 1. Attempt database-backed query for telemetry observations
+        db_result = self._query_ground_stations_from_db(
+            pollutant=pollutant,
+            city=city,
+            corridor_only=corridor_only,
+            canonical_station_id=canonical_station_id,
+            quality_status=quality_status,
+            limit=limit,
+            offset=offset,
+        )
+        if db_result is not None:
+            return db_result
+
+        # 2. In-memory fallback
         all_readings = self._load_ground_readings()
         filtered = all_readings
 
@@ -409,9 +630,21 @@ class EnvironmentalService:
         total = len(filtered)
         paginated = filtered[offset : offset + limit]
 
+        # Retrieve canonical station mappings (database-backed when available)
+        st_map = self._get_canonical_stations_map()
+
+        items = []
+        for r in paginated:
+            m = r.model_dump(by_alias=True)
+            if r.nearest_canonical_station_id and r.nearest_canonical_station_id in st_map:
+                m["canonical_ir_code"] = st_map[r.nearest_canonical_station_id]["ir_code"]
+            else:
+                m["canonical_ir_code"] = None
+            items.append(m)
+
         return {
             "total": total,
-            "returned": len(paginated),
+            "returned": len(items),
             "limit": limit,
             "offset": offset,
             "filters": {
@@ -421,7 +654,9 @@ class EnvironmentalService:
                 "canonical_station_id": canonical_station_id,
                 "quality_status": quality_status,
             },
-            "items": [r.model_dump(by_alias=True) for r in paginated],
+            "items": items,
+            "data_provider": "in_memory_cpcb_snapshot",
+            "station_metadata_provider": "postgres_postgis" if self._is_db_available() else "in_memory_synthetic",
         }
 
     # ==========================================================================

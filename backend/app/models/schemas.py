@@ -156,6 +156,7 @@ class GroundStationReading(BaseModel):
     quality_status: str = Field(..., description="Observation quality (valid | missing_na)")
     is_corridor: bool = Field(..., description="Whether station is within RailAir corridor")
     nearest_canonical_station_id: Optional[str] = Field(None, description="Mapped canonical corridor station ID")
+    canonical_ir_code: Optional[str] = Field(None, description="Official Indian Railways CRIS code of nearest canonical station")
     distance_to_canonical_km: Optional[float] = Field(None, description="Distance to nearest canonical station in km")
     dataset_id: str = Field(..., description="Source dataset ID")
 
