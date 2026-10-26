@@ -106,10 +106,86 @@ pytest backend/tests --cov=backend.app
 
 ---
 
-## 5. API Endpoints Contract
+## 5. PostgreSQL + PostGIS Foundation & Docker Compose
+
+RailAir Intelligence includes a reproducible PostgreSQL 16 + PostGIS 3.4 container environment managed via Docker Compose.
+
+### 5.1 Quick Start
+```bash
+# 1. Start PostGIS container in background
+docker compose up -d
+
+# 2. Verify container health
+docker compose ps
+# Expected status: railair-postgis Up (healthy) on 0.0.0.0:5432
+
+# 3. Check migration status
+python -m backend.app.db.migrator --status
+
+# 4. Apply all schema migrations (idempotent)
+python -m backend.app.db.migrator --apply
+
+# 5. Ingest historical 10 km gridded PM2.5/PM10 dataset (9,216 records)
+python -m backend.app.db.ingest_historical
+```
+
+### 5.2 Container Lifecycle Commands
+- **Start:** `docker compose up -d`
+- **Stop:** `docker compose stop`
+- **Restart:** `docker compose restart`
+- **Tear Down (Preserves Data Volume):** `docker compose down`
+- **Logs:** `docker compose logs -f db`
+- **Interactive SQL Shell:** `docker exec -it railair-postgis psql -U postgres -d railair_db`
+
+### 5.3 Schema Migrations Engine
+The migration runner (`backend.app.db.migrator`) ensures transaction safety and tracks executed migrations in `schema_migrations`:
+- `python -m backend.app.db.migrator --status` — View applied and pending migrations.
+- `python -m backend.app.db.migrator --apply` — Sequentially executes unapplied migrations.
+- `python -m backend.app.db.migrator --reset --confirm` — Resets public schema and reapplies migrations (DEVELOPMENT ONLY; requires explicit confirmation).
+
+Applied migrations:
+1. `001_initial_schema.sql` — PostGIS extension, `stations` table with canonical station IDs and official Indian Railways `ir_code`, `pollutant_observations`, `corridors`, and `corridor_segments`.
+2. `002_environmental_schema.sql` — `environmental_datasets`, `environmental_ground_observations` (CAAQMS telemetry), `environmental_gridded_estimates` (10 km rasters), `meteorological_observations`, and `environmental_ingestion_runs`.
+
+### 5.4 Historical Environmental Ingestion
+Ingests monthly 10 km PM2.5 and PM10 estimates from Zenodo Collection 2 (64 grid cells × 72 months = 9,216 records):
+- **Dry-run validation:** `python -m backend.app.db.ingest_historical --dry-run`
+- **Active ingestion:** `python -m backend.app.db.ingest_historical`
+- **Custom batch size:** `python -m backend.app.db.ingest_historical --batch-size 500`
+
+The ingestion is 100% idempotent (`ON CONFLICT (id) DO UPDATE`), preserves NULL values and units (`µg/m³`), populates PostGIS `Point` geometry, and records run provenance in `environmental_ingestion_runs`.
+
+### 5.5 Troubleshooting
+1. **Port 5432 Conflict:**
+   If a local PostgreSQL service is already occupying port 5432, set `POSTGRES_PORT=5433` in `.env` and `DATABASE_URL=postgresql://postgres:postgres@localhost:5433/railair_db`.
+2. **Container Not Healthy:**
+   Run `docker compose logs db` to inspect PostgreSQL startup logs.
+3. **Database Fallback:**
+   If PostgreSQL is stopped or unreachable, the backend automatically logs a warning and falls back to deterministic in-memory simulation mode without crashing.
+4. **Data Reset Without Volume Deletion:**
+   Run `python -m backend.app.db.migrator --reset --confirm` to drop only public tables and reapply schema cleanly. Do not use `docker volume rm railair_pgdata` unless a complete disk wipe is intended.
+
+---
+
+## 6. API Endpoints Contract
 
 ### Health Check
 `GET /api/v1/health`
+When PostgreSQL/PostGIS is running:
+```json
+{
+  "status": "healthy",
+  "service": "RailAir Intelligence Backend",
+  "version": "0.1.0",
+  "environment": "development",
+  "database": {
+    "connected": true,
+    "mode": "postgres",
+    "detail": "Connected to PostgreSQL 16.4 with PostGIS 3.4 on localhost:5432/railair_db."
+  }
+}
+```
+When running standalone without PostgreSQL:
 ```json
 {
   "status": "healthy",
@@ -119,34 +195,18 @@ pytest backend/tests --cov=backend.app
   "database": {
     "connected": false,
     "mode": "standalone_synthetic",
-    "detail": "Database engine not initialized (local PostgreSQL service not detected). Using deterministic seed provider."
+    "detail": "DATABASE_URL not configured. Running in in-memory simulation mode."
   }
 }
 ```
 
-### Stations
-- `GET /api/v1/stations` — List all 7 corridor stations.
-  - Optional Query Params: `?type=junction`, `?pollutant=PM2.5`
-- `GET /api/v1/stations/{station_id}` — Get single station by ID (e.g. `NDLS`, `MRT`). Returns 404 if not found.
+### Historical Gridded Particulate Surface Estimates (Database-Backed)
+`GET /api/v1/environmental/gridded/corridor`
+- Query Params: `?pollutant=PM2.5&year=2022&month=12&limit=50&offset=0`
+- Bounding Box Params: `?min_lat=28.45&max_lat=29.20&min_lon=77.10&max_lon=77.90` (uses PostGIS spatial index)
+- Response includes `data_provider: "postgres_postgis"` when served from PostGIS, or falls back seamlessly to in-memory if database is offline.
 
-### Corridor
-- `GET /api/v1/corridor` — Returns full route definition, ordered station sequence, contiguous segment track paths, and synthetic particulate exposure estimates.
-
----
-
-## 6. PostgreSQL + PostGIS Schema & Migrations
-
-To initialize a local PostgreSQL database with spatial extensions:
-```bash
-# Ensure PostgreSQL with PostGIS is installed
-psql -U postgres -c "CREATE DATABASE railair_db;"
-psql -U postgres -d railair_db -f backend/app/db/migrations/001_initial_schema.sql
-```
-
-The migration automatically creates:
-1. `postgis` spatial extension
-2. `provenance_records` table
-3. `stations` table with PostGIS `Point` geometry and spatial GiST index
-4. `pollutant_observations` table with foreign key to `stations` and check constraints
-5. `corridors` and `corridor_segments` tables with `LineString` track geometry
-6. Deterministic baseline seed records matching the frontend simulation
+### Stations & Corridors
+- `GET /api/v1/stations` — List 7 canonical stations with internal `id` and official railway `ir_code`.
+- `GET /api/v1/stations/{id}` — Single station metadata and observation readings.
+- `GET /api/v1/corridor` — Full corridor geometry and synthetic exposure profile.

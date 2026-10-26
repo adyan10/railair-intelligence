@@ -22,6 +22,7 @@ from typing import Dict, List, Any, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+from ..db.session import check_db_connectivity, get_db_connection
 from ..models.schemas import (
     EnvironmentalDatasetInfo,
     GroundStationReading,
@@ -474,6 +475,134 @@ class EnvironmentalService:
         self._gridded_estimates = estimates
         return estimates
 
+    def _query_gridded_from_db(
+        self,
+        pollutant: Optional[str] = None,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
+        grid_id: Optional[str] = None,
+        min_lat: Optional[float] = None,
+        max_lat: Optional[float] = None,
+        min_lon: Optional[float] = None,
+        max_lon: Optional[float] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> Optional[Dict[str, Any]]:
+        """Queries historical 10 km gridded estimates from PostgreSQL/PostGIS."""
+        try:
+            status = check_db_connectivity()
+            if not status.get("connected"):
+                return None
+
+            where_clauses = ["1=1"]
+            params: List[Any] = []
+
+            if pollutant:
+                where_clauses.append("UPPER(pollutant) = %s")
+                params.append(pollutant.strip().upper())
+
+            if year is not None:
+                where_clauses.append("year = %s")
+                params.append(year)
+
+            if month is not None:
+                where_clauses.append("month = %s")
+                params.append(month)
+
+            if grid_id:
+                where_clauses.append("grid_id = %s")
+                params.append(grid_id.strip())
+
+            if min_lat is not None and max_lat is not None and min_lon is not None and max_lon is not None:
+                where_clauses.append("geom && ST_MakeEnvelope(%s, %s, %s, %s, 4326)")
+                params.extend([min_lon, min_lat, max_lon, max_lat])
+            else:
+                if min_lat is not None:
+                    where_clauses.append("latitude >= %s")
+                    params.append(min_lat)
+                if max_lat is not None:
+                    where_clauses.append("latitude <= %s")
+                    params.append(max_lat)
+                if min_lon is not None:
+                    where_clauses.append("longitude >= %s")
+                    params.append(min_lon)
+                if max_lon is not None:
+                    where_clauses.append("longitude <= %s")
+                    params.append(max_lon)
+
+            where_sql = " AND ".join(where_clauses)
+
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    # 1. Total count
+                    count_sql = f"SELECT COUNT(*) FROM environmental_gridded_estimates WHERE {where_sql};"
+                    cur.execute(count_sql, params)
+                    count_row = cur.fetchone()
+                    total = count_row[0] if count_row else 0
+
+                    if total == 0:
+                        cur.execute("SELECT COUNT(*) FROM environmental_gridded_estimates LIMIT 1;")
+                        has_any = cur.fetchone()
+                        if not has_any or has_any[0] == 0:
+                            return None
+
+                    # 2. Paginated rows
+                    query_sql = f"""
+                        SELECT
+                            id, grid_id, pollutant, value, unit, year, month,
+                            to_char(observed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as observed_at,
+                            temporal_resolution, spatial_resolution,
+                            latitude::float as latitude,
+                            longitude::float as longitude,
+                            CASE WHEN pollutant = 'PM2.5' THEN 'pm25_arr_10km_' || year || '_monthly.nc'
+                                 ELSE 'pm10_arr_10km_' || year || '_monthly.nc' END AS source_file
+                        FROM environmental_gridded_estimates
+                        WHERE {where_sql}
+                        ORDER BY observed_at ASC, id ASC
+                        LIMIT %s OFFSET %s;
+                    """
+                    cur.execute(query_sql, params + [limit, offset])
+                    rows = cur.fetchall()
+
+                    items = []
+                    for r in rows:
+                        val = float(r[3]) if r[3] is not None else None
+                        items.append({
+                            "id": r[0],
+                            "grid_id": r[1],
+                            "latitude": float(r[10]),
+                            "longitude": float(r[11]),
+                            "pollutant": r[2],
+                            "value": val,
+                            "unit": r[4],
+                            "year": r[5],
+                            "month": r[6],
+                            "observed_at": r[7],
+                            "observation_type": "gridded_surface_estimate",
+                            "spatial_resolution": r[9],
+                            "temporal_resolution": r[8],
+                            "source_file": r[12],
+                        })
+
+                    return {
+                        "total": total,
+                        "returned": len(items),
+                        "limit": limit,
+                        "offset": offset,
+                        "filters": {
+                            "pollutant": pollutant,
+                            "year": year,
+                            "month": month,
+                            "grid_id": grid_id,
+                            "bbox": {"min_lat": min_lat, "max_lat": max_lat, "min_lon": min_lon, "max_lon": max_lon},
+                        },
+                        "items": items,
+                        "data_provider": "postgres_postgis",
+                    }
+        except Exception as exc:
+            logger.warning("PostGIS gridded query failed; falling back to in-memory: %s", exc)
+            return None
+
     def get_gridded_corridor(
         self,
         pollutant: Optional[str] = None,
@@ -488,6 +617,23 @@ class EnvironmentalService:
         offset: int = 0,
     ) -> Dict[str, Any]:
         """Queries historical 10 km gridded PM2.5 and PM10 surface estimates."""
+        # 1. Attempt database-backed PostGIS query
+        db_result = self._query_gridded_from_db(
+            pollutant=pollutant,
+            year=year,
+            month=month,
+            grid_id=grid_id,
+            min_lat=min_lat,
+            max_lat=max_lat,
+            min_lon=min_lon,
+            max_lon=max_lon,
+            limit=limit,
+            offset=offset,
+        )
+        if db_result is not None:
+            return db_result
+
+        # 2. Seamless fallback to in-memory estimates
         all_est = self._load_gridded_estimates()
         filtered = all_est
 
@@ -530,6 +676,7 @@ class EnvironmentalService:
             },
             "items": [e.model_dump(by_alias=True) for e in paginated],
         }
+
 
     # ==========================================================================
     # 4. Mendeley Atmospheric Gases & Meteorology Ingestion
