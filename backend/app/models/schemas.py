@@ -308,6 +308,7 @@ class EnvironmentalTimeSeriesResponse(BaseModel):
     overall_max: float
     winter_peak_mean: float
     monsoon_dip_mean: float
+    data_provider: Optional[str] = Field(None, description="Active data provider: postgres_postgis | in_memory_synthetic")
 
     model_config = ConfigDict(populate_by_name=True)
 

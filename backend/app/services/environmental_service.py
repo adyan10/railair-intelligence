@@ -1096,6 +1096,116 @@ class EnvironmentalService:
         )
 
 
+    def _query_timeseries_from_db(
+        self,
+        grid_id: Optional[str] = None,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None,
+        pollutant: str = "PM2.5",
+    ) -> Optional[Dict[str, Any]]:
+        """Queries 72-month chronological time series from PostgreSQL/PostGIS."""
+        try:
+            status = check_db_connectivity()
+            if not status.get("connected"):
+                return None
+
+            p_upper = pollutant.strip().upper()
+            if p_upper not in ("PM2.5", "PM10"):
+                p_upper = "PM2.5"
+
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    target_grid_id = grid_id.strip() if grid_id else None
+                    target_lat = lat
+                    target_lon = lon
+
+                    # 1. Resolve target cell centroid if grid_id is not given
+                    if target_grid_id is None:
+                        if target_lat is not None and target_lon is not None:
+                            # Use PostGIS nearest-neighbor operator <-> on spatial GiST index
+                            cur.execute(
+                                """
+                                SELECT grid_id, latitude::float, longitude::float
+                                FROM environmental_gridded_estimates
+                                WHERE UPPER(pollutant) = %s
+                                ORDER BY geom <-> ST_SetSRID(ST_MakePoint(%s, %s), 4326)
+                                LIMIT 1;
+                                """,
+                                (p_upper, target_lon, target_lat),
+                            )
+                            row = cur.fetchone()
+                            if row:
+                                target_grid_id, target_lat, target_lon = row[0], row[1], row[2]
+                        else:
+                            target_grid_id = "grid_28.67_77.24"
+
+                    # 2. Fetch coordinate for target_grid_id if not already known
+                    if target_grid_id and (target_lat is None or target_lon is None):
+                        cur.execute(
+                            """
+                            SELECT latitude::float, longitude::float
+                            FROM environmental_gridded_estimates
+                            WHERE grid_id = %s AND UPPER(pollutant) = %s
+                            LIMIT 1;
+                            """,
+                            (target_grid_id, p_upper),
+                        )
+                        coord_row = cur.fetchone()
+                        if coord_row:
+                            target_lat, target_lon = coord_row[0], coord_row[1]
+
+                    # 3. Query all chronological epochs for the target cell
+                    cur.execute(
+                        """
+                        SELECT
+                            year,
+                            month,
+                            value::float,
+                            unit
+                        FROM environmental_gridded_estimates
+                        WHERE grid_id = %s AND UPPER(pollutant) = %s
+                        ORDER BY year ASC, month ASC;
+                        """,
+                        (target_grid_id, p_upper),
+                    )
+                    rows = cur.fetchall()
+
+                    # If grid_id was requested but yielded 0 rows, check if table has data
+                    if not rows and target_grid_id:
+                        cur.execute("SELECT COUNT(*) FROM environmental_gridded_estimates LIMIT 1;")
+                        has_any = cur.fetchone()
+                        if not has_any or has_any[0] == 0:
+                            # Database is empty; return None to trigger fallback
+                            return None
+                        # Table has data, but this specific grid_id has 0 points -> return empty points
+                        return {
+                            "grid_id": target_grid_id,
+                            "latitude": target_lat or 28.6676,
+                            "longitude": target_lon or 77.2431,
+                            "records": [],
+                            "data_provider": "postgres_postgis",
+                        }
+
+                    records = []
+                    for r in rows:
+                        records.append({
+                            "year": r[0],
+                            "month": r[1],
+                            "value": float(r[2]) if r[2] is not None else None,
+                            "unit": r[3],
+                        })
+
+                    return {
+                        "grid_id": target_grid_id or "grid_28.67_77.24",
+                        "latitude": target_lat or 28.6676,
+                        "longitude": target_lon or 77.2431,
+                        "records": records,
+                        "data_provider": "postgres_postgis",
+                    }
+        except Exception as exc:
+            logger.warning("PostGIS timeseries query failed; falling back to in-memory: %s", exc)
+            return None
+
     def get_timeseries(
         self,
         grid_id: Optional[str] = None,
@@ -1103,69 +1213,97 @@ class EnvironmentalService:
         lon: Optional[float] = None,
         pollutant: str = "PM2.5",
     ) -> EnvironmentalTimeSeriesResponse:
-        """Returns 72-month multi-year time series for a grid cell or coordinate."""
+        """Returns 72-month multi-year time series for a grid cell or coordinate.
+        
+        Uses PostgreSQL/PostGIS when available, with automatic fallback to in-memory estimates.
+        """
         p_upper = pollutant.strip().upper()
         if p_upper not in ("PM2.5", "PM10"):
             p_upper = "PM2.5"
 
-        all_est = self._load_gridded_estimates()
-        matching_cells = [e for e in all_est if e.pollutant == p_upper]
-
+        raw_records: List[Dict[str, Any]] = []
         target_grid_id = grid_id
         target_lat = lat
         target_lon = lon
+        data_provider: Optional[str] = None
 
-        if target_grid_id is None:
-            if target_lat is not None and target_lon is not None:
-                best_cell = None
-                best_dist = None
-                for e in matching_cells:
-                    d = haversine_distance_km(target_lat, target_lon, e.latitude, e.longitude)
-                    if best_dist is None or d < best_dist:
-                        best_dist = d
-                        best_cell = e
-                if best_cell:
-                    target_grid_id = best_cell.grid_id
-                    target_lat = best_cell.latitude
-                    target_lon = best_cell.longitude
-            else:
-                target_grid_id = "grid_28.67_77.24"
+        # 1. Attempt database-backed PostGIS query
+        db_result = self._query_timeseries_from_db(
+            grid_id=grid_id,
+            lat=lat,
+            lon=lon,
+            pollutant=p_upper,
+        )
 
-        cell_records = [e for e in matching_cells if e.grid_id == target_grid_id]
-        cell_records.sort(key=lambda x: (x.year, x.month))
+        if db_result is not None:
+            data_provider = "postgres_postgis"
+            target_grid_id = db_result["grid_id"]
+            target_lat = db_result["latitude"]
+            target_lon = db_result["longitude"]
+            raw_records = db_result["records"]
+        else:
+            # 2. In-memory fallback
+            all_est = self._load_gridded_estimates()
+            matching_cells = [e for e in all_est if e.pollutant == p_upper]
 
-        if not cell_records and matching_cells:
-            target_grid_id = matching_cells[0].grid_id
+            if target_grid_id is None:
+                if target_lat is not None and target_lon is not None:
+                    best_cell = None
+                    best_dist = None
+                    for e in matching_cells:
+                        d = haversine_distance_km(target_lat, target_lon, e.latitude, e.longitude)
+                        if best_dist is None or d < best_dist:
+                            best_dist = d
+                            best_cell = e
+                    if best_cell:
+                        target_grid_id = best_cell.grid_id
+                        target_lat = best_cell.latitude
+                        target_lon = best_cell.longitude
+                else:
+                    target_grid_id = "grid_28.67_77.24"
+
             cell_records = [e for e in matching_cells if e.grid_id == target_grid_id]
             cell_records.sort(key=lambda x: (x.year, x.month))
 
-        if cell_records:
-            target_lat = cell_records[0].latitude
-            target_lon = cell_records[0].longitude
+            if cell_records:
+                target_lat = cell_records[0].latitude
+                target_lon = cell_records[0].longitude
 
+            raw_records = [
+                {
+                    "year": e.year,
+                    "month": e.month,
+                    "value": e.value,
+                    "unit": e.unit,
+                }
+                for e in cell_records
+            ]
+
+        # 3. Build chronological points and compute seasonal summary metrics
         points: List[TimeSeriesPoint] = []
         vals: List[float] = []
         winter_vals: List[float] = []
         monsoon_vals: List[float] = []
 
-        for e in cell_records:
-            cat, _ = classify_aqi_category(p_upper, e.value)
+        for r in raw_records:
+            val = r["value"]
+            cat, _ = classify_aqi_category(p_upper, val)
             points.append(
                 TimeSeriesPoint(
-                    period=f"{e.year}-{e.month:02d}",
-                    year=e.year,
-                    month=e.month,
-                    value=e.value,
-                    unit=e.unit,
+                    period=f"{r['year']}-{r['month']:02d}",
+                    year=r["year"],
+                    month=r["month"],
+                    value=val,
+                    unit=r.get("unit", "µg/m³"),
                     category=cat,
                 )
             )
-            if e.value is not None:
-                vals.append(e.value)
-                if e.month in (11, 12, 1):
-                    winter_vals.append(e.value)
-                elif e.month in (7, 8, 9):
-                    monsoon_vals.append(e.value)
+            if val is not None:
+                vals.append(val)
+                if r["month"] in (11, 12, 1):
+                    winter_vals.append(val)
+                elif r["month"] in (7, 8, 9):
+                    monsoon_vals.append(val)
 
         mean_val = round(sum(vals) / len(vals), 2) if vals else 0.0
         min_val = round(min(vals), 2) if vals else 0.0
@@ -1187,7 +1325,9 @@ class EnvironmentalService:
             overall_max=max_val,
             winter_peak_mean=winter_mean,
             monsoon_dip_mean=monsoon_mean,
+            data_provider=data_provider,
         )
+
 
     def get_hotspot_ranking(
         self,
