@@ -1329,6 +1329,75 @@ class EnvironmentalService:
         )
 
 
+    def _query_hotspots_from_db(
+        self,
+        pollutant: str,
+        year: int,
+        month: int,
+        limit: int = 10,
+    ) -> Optional[Dict[str, Any]]:
+        """Queries ranked pollution hotspots from PostgreSQL/PostGIS.
+        
+        Returns None on database connection failure or when database is unpopulated,
+        allowing graceful fallback to in-memory estimates.
+        """
+        p_upper = pollutant.strip().upper()
+        if p_upper not in ("PM2.5", "PM10"):
+            p_upper = "PM2.5"
+
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    query_sql = """
+                        SELECT
+                            grid_id,
+                            latitude::float as latitude,
+                            longitude::float as longitude,
+                            value,
+                            unit
+                        FROM environmental_gridded_estimates
+                        WHERE UPPER(pollutant) = %s
+                          AND year = %s
+                          AND month = %s
+                          AND value IS NOT NULL
+                        ORDER BY value DESC, id ASC
+                        LIMIT %s;
+                    """
+                    cur.execute(query_sql, (p_upper, year, month, limit))
+                    rows = cur.fetchall()
+
+                    if not rows:
+                        cur.execute("SELECT COUNT(*) FROM environmental_gridded_estimates LIMIT 1;")
+                        has_any = cur.fetchone()
+                        if not has_any or has_any[0] == 0:
+                            return None
+                        return {
+                            "year": year,
+                            "month": month,
+                            "records": [],
+                            "data_provider": "postgres_postgis",
+                        }
+
+                    records = []
+                    for r in rows:
+                        records.append({
+                            "grid_id": r[0],
+                            "latitude": float(r[1]),
+                            "longitude": float(r[2]),
+                            "value": float(r[3]),
+                            "unit": r[4],
+                        })
+
+                    return {
+                        "year": year,
+                        "month": month,
+                        "records": records,
+                        "data_provider": "postgres_postgis",
+                    }
+        except Exception as exc:
+            logger.warning("PostGIS hotspots query failed; falling back to in-memory: %s", exc)
+            return None
+
     def get_hotspot_ranking(
         self,
         pollutant: str = "PM2.5",
@@ -1336,28 +1405,79 @@ class EnvironmentalService:
         month: int = 12,
         limit: int = 10,
     ) -> EnvironmentalHotspotsResponse:
-        """Ranks grid cells by pollutant concentration descending for active period."""
+        """Ranks grid cells by pollutant concentration descending for active period.
+        
+        Uses PostgreSQL/PostGIS when available, with automatic fallback to in-memory estimates.
+        """
         p_upper = pollutant.strip().upper()
         if p_upper not in ("PM2.5", "PM10"):
             p_upper = "PM2.5"
 
-        grid_resp = self.get_grid_for_period(pollutant=p_upper, year=year, month=month)
-        sorted_cells = sorted([c for c in grid_resp.cells if c.value is not None], key=lambda x: (x.value or 0.0), reverse=True)
+        raw_records: List[Dict[str, Any]] = []
+        data_provider: Optional[str] = None
+        period_year = year
+        period_month = month
+
+        # 1. Attempt database-backed PostGIS query
+        db_result = self._query_hotspots_from_db(
+            pollutant=p_upper,
+            year=year,
+            month=month,
+            limit=limit,
+        )
+
+        if db_result is not None:
+            data_provider = "postgres_postgis"
+            period_year = db_result["year"]
+            period_month = db_result["month"]
+            raw_records = db_result["records"]
+        else:
+            # 2. In-memory fallback
+            all_est = self._load_gridded_estimates()
+            matching = [
+                e for e in all_est
+                if e.pollutant == p_upper and e.year == year and e.month == month and e.value is not None
+            ]
+            sorted_cells = sorted(matching, key=lambda x: (x.value or 0.0), reverse=True)
+            raw_records = [
+                {
+                    "grid_id": e.grid_id,
+                    "latitude": e.latitude,
+                    "longitude": e.longitude,
+                    "value": e.value or 0.0,
+                    "unit": e.unit,
+                }
+                for e in sorted_cells[:limit]
+            ]
 
         items: List[HotspotRankItem] = []
-        for idx, c in enumerate(sorted_cells[:limit], start=1):
+        for idx, r in enumerate(raw_records, start=1):
+            val = r["value"]
+            cat, _ = classify_aqi_category(p_upper, val)
+            col = interpolate_ramp_color_hex(p_upper, val)
+            lat = r["latitude"]
+            lon = r["longitude"]
+
+            nearest_st: Optional[str] = None
+            min_dist: Optional[float] = None
+            for st in CANONICAL_STATIONS:
+                d = haversine_distance_km(lat, lon, st["lat"], st["lng"])
+                if min_dist is None or d < min_dist:
+                    min_dist = round(d, 2)
+                    nearest_st = st["id"]
+
             items.append(
                 HotspotRankItem(
                     rank=idx,
-                    grid_id=c.grid_id,
-                    latitude=c.latitude,
-                    longitude=c.longitude,
-                    value=c.value or 0.0,
-                    unit=c.unit,
-                    category=c.category,
-                    color=c.color,
-                    nearest_canonical_station_id=c.nearest_station,
-                    distance_to_canonical_km=c.distance_to_station_km,
+                    grid_id=r["grid_id"],
+                    latitude=lat,
+                    longitude=lon,
+                    value=val,
+                    unit=r.get("unit", "µg/m³"),
+                    category=cat,
+                    color=col,
+                    nearest_canonical_station_id=nearest_st,
+                    distance_to_canonical_km=min_dist,
                 )
             )
 
@@ -1365,11 +1485,12 @@ class EnvironmentalService:
             dataset_id="zenodo_gridded_pm_v2",
             pollutant=p_upper,
             unit="µg/m³",
-            year=grid_resp.year,
-            month=grid_resp.month,
-            period=grid_resp.period,
+            year=period_year,
+            month=period_month,
+            period=f"{period_year}-{period_month:02d}",
             total_hotspots=len(items),
             items=items,
+            data_provider=data_provider,
         )
 
     def inspect_location(
