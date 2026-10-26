@@ -130,7 +130,7 @@ export interface HealthRiskAdvisoryResponse {
   general_public_advisory: string;
   sensitive_groups_guidance: SensitiveGroupGuidance[];
   data_timestamp: string;
-  confidence_level: 'high' | 'medium' | 'low' | 'unvalidated';
+  confidence_level: 'high' | 'medium' | 'low' | 'unvalidated' | 'not_estimated';
   limitations: string[];
   disclaimer: string;
 }

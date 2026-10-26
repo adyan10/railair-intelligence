@@ -141,21 +141,38 @@ async def get_health_risk_advisory(
 ) -> HealthRiskAdvisoryResponse:
     try:
         conc = concentration
+        basis = data_basis
         timestamp = "2026-10-24T21:30:00Z"
+        is_instantaneous_snapshot = False
 
-        # If concentration is not supplied, fetch the average reading for the corridor from CPCB snapshot
+        # If concentration is not supplied, fetch the compatible reading from the appropriate dataset
         if conc is None:
-            stats = environmental_analysis_service.analyze_ground_snapshot(pollutant=pollutant, corridor_only=True)
-            conc = stats.stats.mean
-            timestamp = stats.freshness_timestamp
+            if averaging_period == "monthly_mean":
+                # For monthly mean: source from validated monthly gridded estimates (2017-2022)
+                analysis = environmental_analysis_service.analyze_gridded_historical(pollutant=pollutant)
+                conc = analysis.stats.mean
+                timestamp = analysis.freshness_timestamp
+                basis = "modelled_gridded"
+                is_instantaneous_snapshot = False
+            else:
+                # For 24-hr standard or 1-hr snapshot: source from CPCB ground telemetry snapshot
+                stats = environmental_analysis_service.analyze_ground_snapshot(pollutant=pollutant, corridor_only=True)
+                conc = stats.stats.mean
+                timestamp = stats.freshness_timestamp
+                basis = "observed_ground"
+                # The repository CPCB snapshot is an instantaneous point reading, NOT an integrated 24-hour mean
+                is_instantaneous_snapshot = True
+        else:
+            # Caller passed explicit concentration. If 24_hour_mean is requested, treat as verified compatible 24-hr mean
+            is_instantaneous_snapshot = False
 
         return health_risk_advisory_service.evaluate_risk(
             pollutant=pollutant,
             concentration=conc,
             averaging_period=averaging_period,
-            data_basis=data_basis,
+            data_basis=basis,
             data_timestamp=timestamp,
-            is_stale=True,
+            is_instantaneous_snapshot=is_instantaneous_snapshot,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))

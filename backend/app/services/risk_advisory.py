@@ -11,6 +11,9 @@ Strict Safeguards:
 - No clinical diagnostics or individual prognosis (population-level guidance only).
 - Strict separation between averaging periods (24-hour vs monthly mean vs 1-hour snapshot).
 - Never conflates raw physical pollutant concentrations (µg/m³, mg/m³) with unitless AQI indices.
+- Never hardcodes 'HIGH' confidence for deterministic threshold checks; uses 'not_estimated'.
+- Single snapshot observations cannot be reported as verified 24-hour NAAQS exceedances.
+- Monthly modelled gridded estimates cannot be evaluated as 24-hour statutory exceedances.
 - Handles missing/null observations cleanly with 'insufficient_data' status.
 """
 from typing import Dict, Any, Optional, List, Literal
@@ -21,7 +24,7 @@ from ..models.ai_schemas import (
 )
 
 # Statutory CPCB NAAQS 2009 Standards
-# Format: {pollutant: {"24_hour_mean": standard, "annual_mean": standard, "unit": unit}}
+# Format: {pollutant: {"24_hour_mean": standard, "annual_mean": standard, "1_hour_mean": standard, "unit": unit}}
 CPCB_NAAQS_STANDARDS: Dict[str, Dict[str, Any]] = {
     "PM2.5": {"24_hour_mean": 60.0, "annual_mean": 40.0, "unit": "µg/m³"},
     "PM10": {"24_hour_mean": 100.0, "annual_mean": 60.0, "unit": "µg/m³"},
@@ -33,7 +36,6 @@ CPCB_NAAQS_STANDARDS: Dict[str, Dict[str, Any]] = {
 }
 
 # CPCB Sub-Index Concentration Breakpoints for 24-hr averaging periods
-# (Values represent upper bounds of category ranges)
 CPCB_AQI_BREAKPOINTS = {
     "PM2.5": [
         (30.0, "Good", "low", "#10B981"),
@@ -112,6 +114,13 @@ ADVISORY_GUIDANCE_BY_CATEGORY = {
             SensitiveGroupGuidance(group_name="Cardiovascular & Respiratory Conditions", precaution="Immediate risk of exacerbation. Ensure access to supplemental oxygen/emergency care if advised by your physician."),
         ],
     },
+    "Unverified": {
+        "general": "Observation averaging period does not match the statutory CPCB compliance basis. Exercise standard environmental awareness based on ambient conditions.",
+        "sensitive": [
+            SensitiveGroupGuidance(group_name="Children and Older Adults", precaution="Maintain caution during heavy exertion if air appears visibly hazy."),
+            SensitiveGroupGuidance(group_name="Cardiovascular & Respiratory Conditions", precaution="Keep routine respiratory medication accessible."),
+        ],
+    },
 }
 
 
@@ -125,13 +134,20 @@ class HealthRiskAdvisoryService:
         averaging_period: str = "24_hour_mean",
         data_basis: Literal["observed_ground", "modelled_gridded", "statistical_forecast"] = "observed_ground",
         data_timestamp: str = "2026-10-24T21:30:00Z",
-        is_stale: bool = False,
+        is_instantaneous_snapshot: bool = False,
+        measurement_basis: Optional[str] = None,
     ) -> HealthRiskAdvisoryResponse:
-        """Evaluates health risk for a specific pollutant concentration deterministically."""
+        """Evaluates health risk for a specific pollutant concentration deterministically.
+
+        Enforces strict averaging-period compatibility and never reports unverified exceedances.
+        Confidence is explicitly represented as 'not_estimated' for deterministic checks.
+        """
+        if measurement_basis is not None and measurement_basis in ("observed_ground", "modelled_gridded", "statistical_forecast"):
+            data_basis = measurement_basis  # type: ignore
         p_clean = pollutant.strip().upper()
         unit = "mg/m³" if p_clean == "CO" else "µg/m³"
 
-        # Handle missing or null data
+        # 1. Handle missing or null observations
         if concentration is None:
             return HealthRiskAdvisoryResponse(
                 pollutant=p_clean,
@@ -147,74 +163,129 @@ class HealthRiskAdvisoryService:
                 general_public_advisory="Environmental reading is missing or uncalibrated. Risk cannot be evaluated reliably without valid observations.",
                 sensitive_groups_guidance=[],
                 data_timestamp=data_timestamp,
-                confidence_level="unvalidated",
+                confidence_level="not_estimated",
                 limitations=["Telemetry measurement is null or unavailable from data provider."],
             )
 
         val = float(concentration)
+        limitations: List[str] = [
+            "Deterministic threshold evaluation is an exact rule-based classification; statistical confidence intervals are not estimated for single deterministic readings."
+        ]
 
-        # Classify using CPCB category breakpoints
-        breakpoints = CPCB_AQI_BREAKPOINTS.get(p_clean)
-        category = "Moderate"
-        risk_level: RiskCategory = "elevated"
-        color = "#EAB308"
-
-        if breakpoints:
-            for cutoff, cat_name, risk_cat, col in breakpoints:
-                if val <= cutoff:
-                    category = cat_name
-                    risk_level = risk_cat
-                    color = col
-                    break
-        else:
-            # Fallback for pollutants without explicit breakpoints (e.g. NH3)
-            category = "Standard"
-            risk_level = "moderate"
-            color = "#64748B"
-
-        # Evaluate regulatory standard threshold
         naaqs_info = CPCB_NAAQS_STANDARDS.get(p_clean, {})
-        applicable_standard = naaqs_info.get(averaging_period)
-        
+        applicable_standard: Optional[float] = None
         exceedance_status: Literal["within_standard", "exceeds_standard", "unverified_averaging_period", "insufficient_data"] = "unverified_averaging_period"
-        limitations: List[str] = []
+        category = "Unverified Period"
+        risk_level: RiskCategory = "insufficient_data"
+        color = "#64748B"
 
-        if applicable_standard is not None:
-            if val > applicable_standard:
-                exceedance_status = "exceeds_standard"
-            else:
-                exceedance_status = "within_standard"
-        else:
-            # If averaging period doesn't match statutory NAAQS period
-            # (e.g. monthly_mean or 1_hour_snapshot against 24-hr standard)
+        # 2. Case A: 24-Hour Mean Selection
+        if averaging_period == "24_hour_mean":
             std_24h = naaqs_info.get("24_hour_mean")
             applicable_standard = std_24h
+
+            # Rule: If data represents an instantaneous snapshot, it CANNOT establish 24-hr statutory compliance
+            if is_instantaneous_snapshot:
+                category = "Unverified Period (Snapshot Data)"
+                risk_level = "insufficient_data"
+                color = "#64748B"
+                exceedance_status = "unverified_averaging_period"
+                limitations.append(
+                    f"Underlying telemetry is a single instantaneous snapshot ({data_timestamp}). "
+                    f"Statutory 24-hour NAAQS compliance requires continuous 24-hour sampling (minimum 16 hours valid data). "
+                    f"Snapshot reading cannot confirm a 24-hour standard exceedance."
+                )
+                general_adv = (
+                    "Instantaneous snapshot cannot confirm statutory 24-hour compliance under CPCB guidelines. "
+                    "Precautionary guidance: if localized conditions appear hazy, sensitive individuals should pace strenuous exertion."
+                )
+            else:
+                # Genuinely compatible 24-hour mean provided
+                if std_24h is not None:
+                    if val > std_24h:
+                        exceedance_status = "exceeds_standard"
+                    else:
+                        exceedance_status = "within_standard"
+
+                # Classify using CPCB 24-hr AQI breakpoints
+                breakpoints = CPCB_AQI_BREAKPOINTS.get(p_clean, [])
+                for cutoff, cat_name, r_cat, col in breakpoints:
+                    if val <= cutoff:
+                        category = cat_name
+                        risk_level = r_cat
+                        color = col
+                        break
+                general_adv = ADVISORY_GUIDANCE_BY_CATEGORY.get(category, {}).get("general", "")
+
+        # 3. Case B: Monthly Mean Selection
+        elif averaging_period == "monthly_mean":
+            # Rule: CPCB NAAQS defines NO statutory monthly standard. Gridded data is 30-day modelled estimate.
             exceedance_status = "unverified_averaging_period"
+            applicable_standard = None
+            category = "Modelled Monthly Mean"
+            risk_level = "moderate" if val <= 90.0 else ("elevated" if val <= 150.0 else "high")
+            color = "#0284C7" if val <= 90.0 else ("#EAB308" if val <= 150.0 else "#F97316")
+
             limitations.append(
-                f"Averaging period '{averaging_period}' does not directly match the statutory CPCB 24-hour compliance baseline. "
-                f"Reference threshold ({std_24h} {unit}) is provided for comparative exposure context only."
+                "CPCB NAAQS (2009) does not define a statutory monthly standard. "
+                "Monthly gridded estimates represent sub-chronic regional ambient averages from satellite/CTM models (2017–2022), "
+                "not statutory 24-hour ground regulatory measurements."
+            )
+            general_adv = (
+                "Monthly mean represents sub-chronic regional ambient exposure derived from gridded models (2017–2022). "
+                "It demonstrates broad seasonal trends rather than immediate daily regulatory exceedances."
             )
 
+        # 4. Case C: 1-Hour Snapshot Selection
+        elif averaging_period == "1_hour_snapshot":
+            std_1h = naaqs_info.get("1_hour_mean")
+            if std_1h is not None:
+                # Statutory 1-hr standard exists (CO: 4.0 mg/m³, OZONE: 180 µg/m³)
+                applicable_standard = std_1h
+                if val > std_1h:
+                    exceedance_status = "exceeds_standard"
+                    category = "Exceeds 1-Hr Standard"
+                    risk_level = "high"
+                    color = "#EF4444"
+                else:
+                    exceedance_status = "within_standard"
+                    category = "Within 1-Hr Standard"
+                    risk_level = "low"
+                    color = "#10B981"
+                general_adv = f"1-hour snapshot evaluated against statutory CPCB 1-hour standard ({std_1h} {unit})."
+            else:
+                # No 1-hr standard in NAAQS for PM2.5, PM10, NO2, SO2, NH3
+                applicable_standard = None
+                exceedance_status = "unverified_averaging_period"
+                category = "Instantaneous Snapshot"
+                risk_level = "insufficient_data"
+                color = "#64748B"
+                limitations.append(
+                    f"CPCB NAAQS (2009) does not define a 1-hour statutory threshold for {p_clean}. "
+                    "Instantaneous sensor telemetry reflects real-time presence at the observation timestamp only."
+                )
+                general_adv = (
+                    f"Real-time CAAQMS sensor reading reflects instantaneous localized air quality. "
+                    f"CPCB NAAQS defines no 1-hour threshold for {p_clean}; snapshot is interpreted for immediate ambient awareness."
+                )
+        else:
+            exceedance_status = "unverified_averaging_period"
+            category = "Unverified Period"
+            risk_level = "insufficient_data"
+            general_adv = "Unsupported averaging period."
+
+        # Add data provenance and timestamp limitation notes
         if data_basis == "statistical_forecast":
-            limitations.append("Assessment is derived from statistical forecasts with empirical uncertainty, not real-time telemetry.")
-            confidence = "medium"
+            limitations.append("Assessment is derived from statistical forecasts with empirical uncertainty.")
         elif data_basis == "modelled_gridded":
             limitations.append("Assessment is derived from 10 km gridded satellite/chemical transport model estimates.")
-            confidence = "medium"
         else:
-            confidence = "high"
+            limitations.append(f"Observation timestamp: {data_timestamp} (Statutory snapshot).")
 
-        if is_stale:
-            limitations.append(
-                f"Data timestamp ({data_timestamp}) is historical or statutory snapshot telemetry. "
-                "Current immediate meteorological conditions may differ."
-            )
-            confidence = "low" if confidence == "medium" else "medium"
-
-        guidance = ADVISORY_GUIDANCE_BY_CATEGORY.get(
+        guidance_sensitive = ADVISORY_GUIDANCE_BY_CATEGORY.get(
             category,
-            ADVISORY_GUIDANCE_BY_CATEGORY["Moderate"]
-        )
+            ADVISORY_GUIDANCE_BY_CATEGORY["Unverified"]
+        ).get("sensitive", ADVISORY_GUIDANCE_BY_CATEGORY["Unverified"]["sensitive"])
 
         return HealthRiskAdvisoryResponse(
             pollutant=p_clean,
@@ -227,10 +298,10 @@ class HealthRiskAdvisoryService:
             color=color,
             applicable_naaqs_standard=applicable_standard,
             exceedance_status=exceedance_status,
-            general_public_advisory=guidance["general"],
-            sensitive_groups_guidance=guidance["sensitive"],
+            general_public_advisory=general_adv,
+            sensitive_groups_guidance=guidance_sensitive,
             data_timestamp=data_timestamp,
-            confidence_level=confidence,
+            confidence_level="not_estimated",
             limitations=limitations,
         )
 

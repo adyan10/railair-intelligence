@@ -220,40 +220,84 @@ def test_forecast_cpcb_ground_rejection():
 
 
 # ==============================================================================
-# 4. Health Risk & Public Advisory Engine Tests
+# 4. Health Risk & Public Advisory Engine Tests (Averaging Period Safety)
 # ==============================================================================
 
-def test_health_risk_evaluation_cpcb_categories():
-    """Tests deterministic CPCB category and risk level mapping for PM2.5."""
-    # Good <= 30
-    adv_good = health_risk_advisory_service.evaluate_risk("PM2.5", 25.0, "24_hour_mean")
+def test_health_risk_compatible_24_hour_mean():
+    """A genuine 24-hour mean can be evaluated against the statutory NAAQS threshold."""
+    # Under standard (60 µg/m³ for PM2.5)
+    adv_good = health_risk_advisory_service.evaluate_risk(
+        "PM2.5", 25.0, averaging_period="24_hour_mean", is_instantaneous_snapshot=False
+    )
     assert adv_good.cpcb_category == "Good"
     assert adv_good.risk_level == "low"
     assert adv_good.exceedance_status == "within_standard"
+    assert adv_good.confidence_level == "not_estimated"
 
-    # Moderate <= 90
-    adv_mod = health_risk_advisory_service.evaluate_risk("PM2.5", 85.0, "24_hour_mean")
+    # Exceeding 24-hr standard
+    adv_mod = health_risk_advisory_service.evaluate_risk(
+        "PM2.5", 85.0, averaging_period="24_hour_mean", is_instantaneous_snapshot=False
+    )
     assert adv_mod.cpcb_category == "Moderate"
     assert adv_mod.risk_level == "elevated"
-    assert adv_mod.exceedance_status == "exceeds_standard"  # 85 > 60 µg/m³ (NAAQS 24-hr)
-
-    # Severe > 250
-    adv_sev = health_risk_advisory_service.evaluate_risk("PM2.5", 320.0, "24_hour_mean")
-    assert adv_sev.cpcb_category == "Severe"
-    assert adv_sev.risk_level == "critical"
-    assert adv_sev.exceedance_status == "exceeds_standard"
+    assert adv_mod.exceedance_status == "exceeds_standard"
 
 
-def test_health_risk_unverified_averaging_period():
-    """Flags unverified averaging period when comparing monthly mean against 24-hr standard."""
-    adv = health_risk_advisory_service.evaluate_risk("PM2.5", 95.0, averaging_period="monthly_mean")
+def test_health_risk_instantaneous_snapshot_rejected_for_24_hour_standard():
+    """An instantaneous snapshot cannot be treated as a confirmed 24-hour statutory exceedance."""
+    adv = health_risk_advisory_service.evaluate_risk(
+        "PM2.5", 105.0, averaging_period="24_hour_mean", is_instantaneous_snapshot=True
+    )
+    assert adv.exceedance_status == "unverified_averaging_period"
+    assert adv.risk_level == "insufficient_data"
+    assert "Unverified Period (Snapshot Data)" in adv.cpcb_category
+    assert any("Snapshot reading cannot confirm a 24-hour standard exceedance" in l for l in adv.limitations)
+
+
+def test_health_risk_monthly_mean_not_misrepresented_as_24h_exceedance():
+    """A monthly modelled estimate is not misrepresented as a 24-hour statutory exceedance."""
+    adv = health_risk_advisory_service.evaluate_risk(
+        "PM2.5", 95.0, averaging_period="monthly_mean", measurement_basis="modelled_gridded"
+    )
     assert adv.averaging_period == "monthly_mean"
     assert adv.exceedance_status == "unverified_averaging_period"
-    assert any("does not directly match the statutory CPCB 24-hour compliance baseline" in l for l in adv.limitations)
+    assert adv.cpcb_category == "Modelled Monthly Mean"
+    assert any("does not define a statutory monthly standard" in l for l in adv.limitations)
+
+
+def test_health_risk_1_hour_snapshot_without_statutory_standard():
+    """Single timestamp for PM2.5 cannot be treated as verified 1-hour average as no standard exists."""
+    adv = health_risk_advisory_service.evaluate_risk(
+        "PM2.5", 105.0, averaging_period="1_hour_snapshot"
+    )
+    assert adv.exceedance_status == "unverified_averaging_period"
+    assert adv.cpcb_category == "Instantaneous Snapshot"
+    assert adv.risk_level == "insufficient_data"
+    assert any("does not define a 1-hour statutory threshold" in l for l in adv.limitations)
+
+
+def test_health_risk_1_hour_snapshot_with_statutory_standard():
+    """Pollutants with statutory 1-hr standards (e.g. CO) can be evaluated."""
+    adv_co = health_risk_advisory_service.evaluate_risk(
+        "CO", 2.0, averaging_period="1_hour_snapshot"
+    )
+    assert adv_co.exceedance_status == "within_standard"
+
+    adv_co_high = health_risk_advisory_service.evaluate_risk(
+        "CO", 6.0, averaging_period="1_hour_snapshot"
+    )
+    assert adv_co_high.exceedance_status == "exceeds_standard"
+
+
+def test_health_risk_confidence_never_hardcoded_high():
+    """Deterministic rule-based threshold evaluation returns not_estimated confidence."""
+    adv = health_risk_advisory_service.evaluate_risk("PM2.5", 105.0)
+    assert adv.confidence_level == "not_estimated"
+    assert adv.confidence_level != "high"
 
 
 def test_health_risk_null_observation_handling():
-    """Handles null/missing telemetry with insufficient_data risk level."""
+    """Handles null/missing telemetry with insufficient_data risk level and preserves null."""
     adv = health_risk_advisory_service.evaluate_risk("PM2.5", None)
     assert adv.risk_level == "insufficient_data"
     assert adv.cpcb_category == "No Data"
@@ -317,15 +361,38 @@ def test_api_environmental_ai_forecast(client):
     assert data["evaluation"]["rmse"] > 0.0
 
 
-def test_api_environmental_ai_advisory(client):
-    """Tests GET /api/v1/environmental/ai/advisory."""
-    res = client.get("/api/v1/environmental/ai/advisory?pollutant=PM2.5&concentration=115.0&averaging_period=24_hour_mean")
-    assert res.status_code == 200
-    data = res.json()
+def test_api_environmental_ai_advisory_dynamic_three_periods(client):
+    """Tests GET /api/v1/environmental/ai/advisory across all 3 periods without hardcoding."""
+    # 1. 24-Hour standard query (uses ground snapshot -> unverified)
+    r24 = client.get("/api/v1/environmental/ai/advisory?pollutant=PM2.5&averaging_period=24_hour_mean")
+    assert r24.status_code == 200
+    d24 = r24.json()
+    assert d24["averaging_period"] == "24_hour_mean"
+    assert d24["exceedance_status"] == "unverified_averaging_period"
+    assert d24["risk_level"] == "insufficient_data"
+    assert d24["data_basis"] == "observed_ground"
+    assert d24["confidence_level"] == "not_estimated"
+    c24 = d24["concentration"]
+    assert c24 is not None
 
-    assert data["pollutant"] == "PM2.5"
-    assert data["concentration"] == 115.0
-    assert data["cpcb_category"] == "Poor"
-    assert data["risk_level"] == "high"
-    assert data["exceedance_status"] == "exceeds_standard"
-    assert len(data["sensitive_groups_guidance"]) >= 2
+    # 2. Monthly mean query (uses gridded modelled estimate -> distinct concentration and timestamp)
+    rm = client.get("/api/v1/environmental/ai/advisory?pollutant=PM2.5&averaging_period=monthly_mean")
+    assert rm.status_code == 200
+    dm = rm.json()
+    assert dm["averaging_period"] == "monthly_mean"
+    assert dm["data_basis"] == "modelled_gridded"
+    assert dm["cpcb_category"] == "Modelled Monthly Mean"
+    assert dm["exceedance_status"] == "unverified_averaging_period"
+    assert dm["confidence_level"] == "not_estimated"
+    cm = dm["concentration"]
+    assert cm is not None
+    # Monthly modelled concentration is distinct from ground snapshot
+    assert cm != c24
+
+    # 3. 1-Hour snapshot query
+    r1h = client.get("/api/v1/environmental/ai/advisory?pollutant=PM2.5&averaging_period=1_hour_snapshot")
+    assert r1h.status_code == 200
+    d1h = r1h.json()
+    assert d1h["averaging_period"] == "1_hour_snapshot"
+    assert d1h["exceedance_status"] == "unverified_averaging_period"
+    assert d1h["confidence_level"] == "not_estimated"

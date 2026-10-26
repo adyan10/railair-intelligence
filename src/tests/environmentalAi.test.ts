@@ -95,5 +95,31 @@ describe('Environmental AI Client Integration', () => {
     expect(advisory.averaging_period).toBe('monthly_mean');
     expect(advisory.exceedance_status).toBe('unverified_averaging_period');
     expect(advisory.data_basis).toBe('modelled_gridded');
+    expect(advisory.confidence_level).toBe('not_estimated');
+  });
+
+  it('evaluates all 3 averaging period selections with distinct data semantics and no hardcoded HIGH confidence', async () => {
+    // 1. 24-Hour standard query (uses ground snapshot -> unverified period)
+    const adv24 = await environmentalApiClient.fetchAiAdvisory('PM2.5', undefined, '24_hour_mean', 'observed_ground');
+    expect(adv24.averaging_period).toBe('24_hour_mean');
+    expect(adv24.exceedance_status).toBe('unverified_averaging_period');
+    expect(adv24.data_basis).toBe('observed_ground');
+    expect(adv24.confidence_level).toBe('not_estimated');
+    expect(adv24.confidence_level).not.toBe('high');
+
+    // 2. Monthly mean query (uses modelled gridded -> distinct monthly concentration)
+    const advMonth = await environmentalApiClient.fetchAiAdvisory('PM2.5', undefined, 'monthly_mean', 'modelled_gridded');
+    expect(advMonth.averaging_period).toBe('monthly_mean');
+    expect(advMonth.data_basis).toBe('modelled_gridded');
+    expect(advMonth.cpcb_category).toBe('Modelled Monthly Mean');
+    expect(advMonth.exceedance_status).toBe('unverified_averaging_period');
+    expect(advMonth.confidence_level).toBe('not_estimated');
+    expect(advMonth.concentration).not.toBe(adv24.concentration);
+
+    // 3. 1-Hour snapshot query
+    const adv1h = await environmentalApiClient.fetchAiAdvisory('PM2.5', undefined, '1_hour_snapshot', 'observed_ground');
+    expect(adv1h.averaging_period).toBe('1_hour_snapshot');
+    expect(adv1h.exceedance_status).toBe('unverified_averaging_period');
+    expect(adv1h.confidence_level).toBe('not_estimated');
   });
 });

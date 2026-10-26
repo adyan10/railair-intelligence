@@ -657,36 +657,83 @@ export class EnvironmentalApiClient {
       // Offline fallback
     }
 
-    const val = concentration ?? 105.0;
-    const cat = val <= 30 ? 'Good' : val <= 60 ? 'Satisfactory' : val <= 90 ? 'Moderate' : val <= 120 ? 'Poor' : val <= 250 ? 'Very Poor' : 'Severe';
-    const risk = val <= 30 ? 'low' : val <= 60 ? 'moderate' : val <= 90 ? 'elevated' : val <= 120 ? 'high' : 'critical';
-    const col = val <= 30 ? '#10B981' : val <= 60 ? '#84CC16' : val <= 90 ? '#EAB308' : val <= 120 ? '#F97316' : '#EF4444';
+    // Deterministic fallback matching backend HealthRiskAdvisoryService
+    let val: number;
+    let cat: string;
+    let risk: 'low' | 'moderate' | 'elevated' | 'high' | 'critical' | 'insufficient_data';
+    let col: string;
+    let exceedance: 'within_standard' | 'exceeds_standard' | 'unverified_averaging_period' | 'insufficient_data';
+    let applicableStd: number | null = null;
+    let basis = dataBasis;
+    let timestamp = '2026-10-24T21:30:00Z';
+    let generalAdv = '';
+    const limitations: string[] = [
+      'Deterministic threshold evaluation is an exact rule-based classification; statistical confidence intervals are not estimated for single deterministic readings.',
+    ];
+
+    if (averagingPeriod === '24_hour_mean') {
+      applicableStd = 60.0;
+      if (concentration === undefined || concentration === null) {
+        // Unverified snapshot telemetry cannot establish 24-hr compliance
+        val = 104.6;
+        cat = 'Unverified Period (Snapshot Data)';
+        risk = 'insufficient_data';
+        col = '#64748B';
+        exceedance = 'unverified_averaging_period';
+        generalAdv = 'Instantaneous snapshot cannot confirm statutory 24-hour compliance under CPCB guidelines.';
+        limitations.push('Underlying telemetry is a single instantaneous snapshot (2026-10-24 21:30 UTC); cannot confirm a 24-hour standard exceedance.');
+      } else {
+        val = concentration;
+        exceedance = val > 60.0 ? 'exceeds_standard' : 'within_standard';
+        cat = val <= 30 ? 'Good' : val <= 60 ? 'Satisfactory' : val <= 90 ? 'Moderate' : val <= 120 ? 'Poor' : val <= 250 ? 'Very Poor' : 'Severe';
+        risk = val <= 30 ? 'low' : val <= 60 ? 'moderate' : val <= 90 ? 'elevated' : val <= 120 ? 'high' : 'critical';
+        col = val <= 30 ? '#10B981' : val <= 60 ? '#84CC16' : val <= 90 ? '#EAB308' : val <= 120 ? '#F97316' : '#EF4444';
+        generalAdv = val > 120 ? 'Unhealthy air conditions for general public.' : 'Pace strenuous aerobic outdoor exertion.';
+      }
+    } else if (averagingPeriod === 'monthly_mean') {
+      val = concentration ?? 195.0; // December 2022 monthly mean
+      basis = 'modelled_gridded';
+      timestamp = '2022-12-01T00:00:00Z';
+      cat = 'Modelled Monthly Mean';
+      risk = val <= 90.0 ? 'moderate' : (val <= 150.0 ? 'elevated' : 'high');
+      col = val <= 90.0 ? '#0284C7' : (val <= 150.0 ? '#EAB308' : '#F97316');
+      exceedance = 'unverified_averaging_period';
+      applicableStd = null;
+      generalAdv = 'Monthly mean represents sub-chronic regional ambient exposure derived from gridded models (2017–2022).';
+      limitations.push('CPCB NAAQS (2009) does not define a statutory monthly standard. Gridded estimates cannot be used for 24-hour compliance determination.');
+    } else {
+      // 1_hour_snapshot
+      val = concentration ?? 105.0;
+      basis = 'observed_ground';
+      cat = 'Instantaneous Snapshot';
+      risk = val > 60.0 ? 'elevated' : 'moderate';
+      col = val > 60.0 ? '#EAB308' : '#84CC16';
+      exceedance = 'unverified_averaging_period';
+      applicableStd = null;
+      generalAdv = 'Real-time CAAQMS sensor reading reflects instantaneous localized air quality. CPCB NAAQS defines no 1-hour threshold for this pollutant.';
+      limitations.push('CPCB NAAQS 2009 does not define a 1-hour standard for PM2.5/PM10. Reading represents an instantaneous CAAQMS snapshot.');
+    }
 
     return {
       pollutant,
       concentration: val,
       unit: pollutant === 'CO' ? 'mg/m³' : 'µg/m³',
       averaging_period: averagingPeriod,
-      data_basis: dataBasis,
+      data_basis: basis,
       cpcb_category: cat,
       risk_level: risk,
       color: col,
-      applicable_naaqs_standard: averagingPeriod === '24_hour_mean' ? 60.0 : null,
+      applicable_naaqs_standard: applicableStd,
       standard_reference: 'CPCB National Ambient Air Quality Standards (NAAQS 2009) & National AQI Guidelines',
-      exceedance_status: averagingPeriod === '24_hour_mean' ? (val > 60.0 ? 'exceeds_standard' : 'within_standard') : 'unverified_averaging_period',
-      general_public_advisory: val > 120
-        ? 'Unhealthy air conditions. Shift intense physical activities indoors and minimize non-essential outdoor travel.'
-        : 'Elevated particulate presence. Healthy individuals should pace strenuous aerobic outdoor exertion.',
+      exceedance_status: exceedance,
+      general_public_advisory: generalAdv,
       sensitive_groups_guidance: [
         { group_name: 'Children and Older Adults', precaution: 'Avoid prolonged outdoor playtime; stay indoors during early morning and late evening peaks.' },
         { group_name: 'Cardiovascular & Respiratory Conditions', precaution: 'Wear N95 respirators near high-density traffic nodes; keep emergency inhalers readily accessible.' },
       ],
-      data_timestamp: '2026-10-24T21:30:00Z',
-      confidence_level: dataBasis === 'statistical_forecast' ? 'medium' : 'high',
-      limitations: [
-        'Advisories provide evidence-based population-level environmental guidance aligned with CPCB criteria.',
-        'Data timestamp is statutory snapshot telemetry.',
-      ],
+      data_timestamp: timestamp,
+      confidence_level: 'not_estimated',
+      limitations,
       disclaimer: 'Advisories provide evidence-based population-level environmental guidance aligned with CPCB criteria. They do not constitute individual medical diagnoses or clinical prognoses.',
     };
   }

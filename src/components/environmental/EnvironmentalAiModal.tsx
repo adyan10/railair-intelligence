@@ -74,11 +74,13 @@ export const EnvironmentalAiModal: React.FC<EnvironmentalAiModalProps> = ({
           const res = await environmentalApiClient.fetchAiForecast(activePollutant, undefined, horizonMonths);
           if (isMounted) setForecastData(res);
         } else if (activeTab === 'advisory') {
+          setAdvisoryData(null);
+          const basis = averagingPeriod === 'monthly_mean' ? 'modelled_gridded' : 'observed_ground';
           const res = await environmentalApiClient.fetchAiAdvisory(
             activePollutant,
             undefined,
             averagingPeriod,
-            'observed_ground'
+            basis
           );
           if (isMounted) setAdvisoryData(res);
         }
@@ -605,19 +607,38 @@ export const EnvironmentalAiModal: React.FC<EnvironmentalAiModalProps> = ({
               {/* Advisory Overview Card */}
               <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl flex flex-wrap items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span
                       className="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider text-white shadow-xs"
                       style={{ backgroundColor: advisoryData.color }}
                     >
                       {advisoryData.cpcb_category} (Risk: {advisoryData.risk_level.toUpperCase()})
                     </span>
+                    {advisoryData.exceedance_status === 'unverified_averaging_period' && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-slate-800 text-amber-300 border border-amber-500/30">
+                        UNVERIFIED PERIOD
+                      </span>
+                    )}
+                    {advisoryData.exceedance_status === 'exceeds_threshold' && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-rose-950 text-rose-300 border border-rose-500/30">
+                        EXCEEDS STANDARD
+                      </span>
+                    )}
+                    {advisoryData.exceedance_status === 'within_threshold' && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-emerald-950 text-emerald-300 border border-emerald-500/30">
+                        WITHIN STANDARD
+                      </span>
+                    )}
                     <span className="text-xs text-slate-400 font-mono">
-                      {advisoryData.pollutant} · {advisoryData.concentration ?? 'NA'} {advisoryData.unit}
+                      {advisoryData.pollutant} · {advisoryData.concentration !== null ? advisoryData.concentration : 'NA'} {advisoryData.unit}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-400 font-mono">
-                    Averaging Basis: {advisoryData.averaging_period.replace('_', ' ')} · Reference: CPCB NAAQS 2009
+                  <div className="text-[11px] text-slate-400 font-mono flex flex-wrap gap-x-3 gap-y-1">
+                    <span>Averaging Basis: {advisoryData.averaging_period.replace(/_/g, ' ')}</span>
+                    <span>·</span>
+                    <span>Data Kind: {advisoryData.data_basis === 'modelled_gridded' ? 'Modelled Gridded Estimate' : 'Observed Ground Sensor'}</span>
+                    <span>·</span>
+                    <span>Ref: {advisoryData.standard_reference}</span>
                   </div>
                 </div>
 
@@ -659,6 +680,35 @@ export const EnvironmentalAiModal: React.FC<EnvironmentalAiModalProps> = ({
                 </div>
               </div>
 
+              {/* Compatibility & Safeguard Notice */}
+              {advisoryData.exceedance_status === 'unverified_averaging_period' && (
+                <div className="bg-amber-950/20 border border-amber-500/30 p-3.5 rounded-xl text-xs space-y-1.5">
+                  <div className="font-semibold text-amber-300 flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Averaging Period & Statutory Standard Compatibility Notice</span>
+                  </div>
+                  <p className="text-slate-300 text-[11px] leading-relaxed">
+                    {advisoryData.averaging_period === '24_hour_mean' && (
+                      <>
+                        The active ground record is an <strong>instantaneous snapshot</strong> from{' '}
+                        <span className="font-mono text-amber-200">{advisoryData.data_timestamp}</span>. CPCB NAAQS 2009 statutory standards require a 24-hour integrated mean (minimum 16 hours continuous diurnal sampling). Evaluating an instantaneous point observation directly against a 24-hour statutory threshold without continuous diurnal sampling is statistically unverified.
+                      </>
+                    )}
+                    {advisoryData.averaging_period === 'monthly_mean' && (
+                      <>
+                        This concentration is a <strong>monthly modelled gridded mean</strong> derived from satellite AOD and chemical transport modelling (IIT Delhi NetCDF series, period ending{' '}
+                        <span className="font-mono text-amber-200">{advisoryData.data_timestamp}</span>). CPCB NAAQS 2009 establishes 24-hour and annual standards, but does <strong>not</strong> define a monthly statutory threshold. This value provides climatological context rather than a statutory compliance violation.
+                      </>
+                    )}
+                    {advisoryData.averaging_period === '1_hour_snapshot' && (
+                      <>
+                        The active record is an instantaneous measurement at <span className="font-mono text-amber-200">{advisoryData.data_timestamp}</span>. Under CPCB NAAQS 2009, 1-hour statutory standards exist strictly for <strong>CO</strong> (4.0 mg/m³) and <strong>Ozone</strong> (180 µg/m³); there is no statutory 1-hour threshold for <strong>{advisoryData.pollutant}</strong>.
+                      </>
+                    )}
+                  </p>
+                </div>
+              )}
+
               {/* General Public Advisory */}
               <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
                 <div className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center gap-2">
@@ -694,8 +744,10 @@ export const EnvironmentalAiModal: React.FC<EnvironmentalAiModalProps> = ({
               <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 text-[10px] text-slate-400 space-y-1">
                 <div className="font-semibold text-slate-300">Statutory & Clinical Integrity Notice</div>
                 <p>{advisoryData.disclaimer}</p>
-                <div className="pt-1 text-slate-400">
-                  Data Timestamp: {advisoryData.data_timestamp} · Confidence: {advisoryData.confidence_level.toUpperCase()}
+                <div className="pt-1 text-slate-400 flex flex-wrap gap-x-4 gap-y-1 font-mono">
+                  <span>Data Timestamp: {advisoryData.data_timestamp}</span>
+                  <span>·</span>
+                  <span>Confidence: {advisoryData.confidence_level === 'not_estimated' ? 'NOT ESTIMATED (DETERMINISTIC EVALUATION)' : advisoryData.confidence_level.toUpperCase()}</span>
                 </div>
               </div>
             </div>

@@ -163,7 +163,7 @@ class HealthRiskAdvisoryResponse(BaseModel):
     general_public_advisory: str
     sensitive_groups_guidance: List[SensitiveGroupGuidance]
     data_timestamp: str
-    confidence_level: Literal["high", "medium", "low", "unvalidated"]
+    confidence_level: Literal["high", "medium", "low", "unvalidated", "not_estimated"]
     limitations: List[str]
     disclaimer: str = Field(
         default=(
