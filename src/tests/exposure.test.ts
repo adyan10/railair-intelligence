@@ -7,6 +7,7 @@ import {
   type BaselineMetrics,
   type AssumptionSet,
 } from '../lib/exposure';
+import { formatExposureProxy, formatConcentration } from '../lib/formatters';
 import { STATIONS, CORRIDOR_SEGMENTS } from '../data/mock';
 
 describe('calcSegmentExposure', () => {
@@ -244,3 +245,50 @@ describe('calcScenarioResult', () => {
     expect(res.coveragePct).toBeLessThanOrEqual(95);
   });
 });
+
+describe('Exposure Proxy Units and Formatting', () => {
+  const mrt = STATIONS.find((s) => s.id === 'MRT')!;
+  const ndls = STATIONS.find((s) => s.id === 'NDLS')!;
+
+  it('formats exposure proxy values with correct µg·h/m³ unit', () => {
+    expect(formatExposureProxy(221.7)).toBe('221.7 µg·h/m³');
+    expect(formatExposureProxy(383.4)).toBe('383.4 µg·h/m³');
+    expect(formatExposureProxy(221.7)).not.toContain('µg²h/m³');
+    expect(formatExposureProxy(221.7)).not.toContain('?');
+  });
+
+  it('supports plain-text unit representation when specified', () => {
+    expect(formatExposureProxy(221.7, 'µg*h/m³')).toBe('221.7 µg*h/m³');
+  });
+
+  it('preserves ordinary concentration values in µg/m³', () => {
+    expect(formatConcentration(120)).toBe('120 µg/m³');
+    expect(formatConcentration(120)).not.toContain('µg·h/m³');
+    expect(formatConcentration(120)).not.toContain('µg²');
+  });
+
+  it('documents exposure proxy unit as µg·h/m³ with disclaimer in journey estimate', () => {
+    const estimate = buildJourneyEstimate(
+      'journey-units-test',
+      'MRT -> NDLS',
+      mrt,
+      ndls,
+      CORRIDOR_SEGMENTS,
+      STATIONS,
+      108
+    );
+
+    expect(estimate.calculationNote).toContain('Units: µg·h/m³');
+    expect(estimate.calculationNote).not.toContain('µg²h/m³');
+    expect(estimate.calculationNote).toContain('concentration-time proxy only');
+    expect(estimate.calculationNote).toContain('not an inhaled dose');
+
+    // Confirm PM2.5 and PM10 proxy values are numerically unchanged: sum(conc * hours)
+    const expectedPm25 = estimate.segments.reduce(
+      (sum, s) => sum + s.pm25Concentration * (s.travelTimeMinutes / 60),
+      0
+    );
+    expect(estimate.totalPm25ExposureProxy).toBeCloseTo(expectedPm25, 4);
+  });
+});
+

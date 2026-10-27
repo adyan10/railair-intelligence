@@ -1,10 +1,10 @@
 // ============================================================
-// RailAir Intelligence ? Exposure Calculation Library
+// RailAir Intelligence — Exposure Calculation Library
 // Pure, deterministic functions. Easily unit-testable.
 // ============================================================
 //
 // DISCLAIMER: These calculations produce a concentration-time
-// exposure proxy (?g?h/m?), NOT an actual inhaled dose, personal
+// exposure proxy (µg·h/m³), NOT an actual inhaled dose, personal
 // exposure measurement, or validated health-risk score.
 // ============================================================
 

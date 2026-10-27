@@ -4,12 +4,12 @@
 
 import type { ConfidenceLevel } from '../types/railair';
 
-export function formatConcentration(value: number, unit = '?g/m?'): string {
+export function formatConcentration(value: number, unit = 'µg/m³'): string {
   return `${value.toFixed(0)} ${unit}`;
 }
 
-export function formatExposureProxy(value: number): string {
-  return `${value.toFixed(1)} ?g?h/m?`;
+export function formatExposureProxy(value: number, unit = 'µg·h/m³'): string {
+  return `${value.toFixed(1)} ${unit}`;
 }
 
 export function formatPercent(value: number, decimals = 1): string {

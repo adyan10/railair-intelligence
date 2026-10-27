@@ -67,8 +67,8 @@ export interface JourneySegmentEstimate {
   travelTimeMinutes: number;
   pm25Concentration: number;
   pm10Concentration: number;
-  pm25ExposureProxy: number;  // ?g?h/m?
-  pm10ExposureProxy: number;  // ?g?h/m?
+  pm25ExposureProxy: number;  // µg·h/m³
+  pm10ExposureProxy: number;  // µg·h/m³
 }
 
 export interface TrainServiceOption {
